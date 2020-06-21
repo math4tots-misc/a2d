@@ -1,9 +1,9 @@
 //! Just run test main
 extern crate a2d;
+use a2d::Graphics2D;
 use a2d::Instance;
 use a2d::SpriteBatch;
 use a2d::SpriteSheet;
-use a2d::Graphics2D;
 use futures::executor::block_on;
 use winit::{
     dpi::LogicalSize,
