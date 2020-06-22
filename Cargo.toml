@@ -3,6 +3,10 @@ name = "a2d"
 version = "0.1.0"
 authors = ["Kyumin Kim <math4tots@users.noreply.github.com>"]
 edition = "2018"
+license = "Apache-2.0"
+repository = "https://github.com/math4tots/a2d"
+description = "A 2D graphics library"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
