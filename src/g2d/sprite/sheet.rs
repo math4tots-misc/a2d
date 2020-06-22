@@ -27,7 +27,30 @@ impl SpriteSheet {
         Self::from_rbga_image(state, &rgba)
     }
 
-    fn from_rbga_image(
+    pub fn from_colors<C, V>(
+        state: &mut Graphics2D,
+        width: u32,
+        height: u32,
+        colors: Vec<C>,
+    ) -> Result<Rc<Self>>
+    where
+        C: Into<Color>,
+        V: IntoIterator<Item = C>,
+    {
+        assert_eq!(width * height, colors.len());
+        let pixels = Vec::new();
+        for color in colors {
+            let color = color.into();
+            pixels.extend(&color.to_u8_array())
+        }
+        let rgba = match image::RgbaImage::from_raw(width, height, pixels) {
+            Some(img) => img,
+            None => err!("Failed to create image from colors for SpriteSheet"),
+        };
+        Self::from_rbga_image(state, &rgba)
+    }
+
+    pub fn from_rbga_image(
         state: &mut Graphics2D,
         diffuse_rgba: &image::RgbaImage,
     ) -> Result<Rc<Self>> {

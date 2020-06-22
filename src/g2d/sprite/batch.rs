@@ -31,9 +31,19 @@ impl SpriteBatch {
         &mut self.instances[i]
     }
 
-    pub fn add(&mut self, inst: Instance) -> usize {
-        let id = self.instances().len();
+    pub fn set(&mut self, i: usize, inst: Instance) {
+        self.instances[i] = inst
+    }
+
+    pub fn add(&mut self, inst: Instance) {
         self.instances.push(inst);
-        id
+    }
+
+    pub fn last(&self) -> Option<&Instance> {
+        self.instances.last()
+    }
+
+    pub fn pop(&mut self) {
+        self.instances.pop();
     }
 }
