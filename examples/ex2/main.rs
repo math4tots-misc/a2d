@@ -11,45 +11,56 @@ use winit::{
     window::WindowBuilder,
 };
 
+const DISPLAY_WIDTH: f32 = 1200.0;
+const DISPLAY_HEIGHT: f32 = 800.0;
+const WIDTH: f32 = DISPLAY_WIDTH / DISPLAY_HEIGHT;
+const HEIGHT: f32 = 1.0;
+
 pub fn main() {
     // simple_logger::init_with_level(log::Level::Debug).unwrap();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_inner_size(LogicalSize {
-            width: 1200,
-            height: 800,
+            width: DISPLAY_WIDTH,
+            height: DISPLAY_HEIGHT,
         })
         .build(&event_loop)
         .unwrap();
 
     let mut state = block_on(Graphics2D::from_winit_window(&window)).unwrap();
-    state.set_scale([1200.0 / 800.0, 1.0]);
-    let sheet = SpriteSheet::from_bytes(&mut state, include_bytes!("happy-tree.png")).unwrap();
-    let mut batch = SpriteBatch::new(sheet);
-    batch.add(Instance::new(
-        [0.0, 0.0, 0.75, 0.75],
+    state.set_scale([ WIDTH, HEIGHT ]);
+    let sheet = SpriteSheet::from_color(&mut state, [1.0, 0.5, 0.5]).unwrap();
+    let mut batch1 = SpriteBatch::new(sheet);
+    batch1.add(Instance::new(
+        [0.0, 0.0, 1.0, 1.0],
         [0.25, 0.25, 0.75, 0.75],
         3.14 / 3.0,
     ));
-    batch.add(Instance::new(
-        [0.0, 0.0, 0.5, 0.5],
+    batch1.add(Instance::new(
+        [0.0, 0.0, 1.0, 1.0],
         [0.0, 0.0, 0.25, 0.25],
         0.0,
     ));
-    batch.add(Instance::new(
-        [0.75, 0.75, 1.0, 1.0],
+    batch1.add(Instance::new(
+        [0.0, 0.0, 1.0, 1.0],
         [0.5, 0.5, 1.0, 1.0],
         0.0,
     ));
-    batch.add(Instance::new(
-        [0.0, 0.75, 0.2, 1.0],
+    batch1.add(Instance::new(
+        [0.0, 0.0, 1.0, 1.0],
         [0.5, 0.5, 1.0, 1.0],
         0.0,
     ));
-    batch.add(Instance::new(
-        [0.0, 0.75, 0.2, 1.0],
+    batch1.add(Instance::new(
+        [0.0, 0.0, 1.0, 1.0],
         [-0.1, 0.0, 0.1, 0.1],
         0.0,
+    ));
+    let mut batch2 = SpriteBatch::new(SpriteSheet::from_color(&mut state, [0.5, 0.5, 0.1]).unwrap());
+    batch2.add(Instance::new(
+        [0.0, 0.0, 1.0, 1.0],
+        [0.5, 0.0, WIDTH, HEIGHT / 2.0],
+        0.2,
     ));
 
     let start = std::time::SystemTime::now();
@@ -57,11 +68,11 @@ pub fn main() {
     event_loop.run(move |event, _, control_flow| match event {
         Event::RedrawRequested(_) => {
             {
-                let instance = batch.get_mut(0);
+                let instance = batch1.get_mut(0);
                 let dur = start.elapsed().unwrap().as_secs_f32();
                 instance.set_rotation((dur / 6.0).fract() * 2.0 * std::f32::consts::PI);
             }
-            state.render(&[&batch]);
+            state.render(&[&batch1, &batch2]);
             std::thread::yield_now();
         }
         Event::MainEventsCleared => {

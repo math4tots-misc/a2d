@@ -11,11 +11,13 @@ macro_rules! err {
     };
 }
 
+mod color;
 mod error;
 mod g2d;
 mod res;
 mod shaders;
 
+pub use color::Color;
 pub use error::A2DError;
 pub use error::Result;
 pub use g2d::Graphics2D;

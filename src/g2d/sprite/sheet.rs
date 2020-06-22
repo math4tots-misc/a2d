@@ -1,3 +1,4 @@
+use crate::Color;
 use crate::Graphics2D;
 use crate::Result;
 use std::rc::Rc;
@@ -7,16 +8,34 @@ pub struct SpriteSheet {
 }
 
 impl SpriteSheet {
+    /// Creates a sprite sheet from image bytes
+    ///
+    /// The bytes are interpreted by passing the bytes to the
+    /// `load_from_memory` function from the `image` crate
     pub fn from_bytes(state: &mut Graphics2D, diffuse_bytes: &[u8]) -> Result<Rc<Self>> {
+        let diffuse_image = image::load_from_memory(diffuse_bytes)?;
+        let diffuse_rgba = diffuse_image.to_rgba();
+        Self::from_rbga_image(state, &diffuse_rgba)
+    }
+
+    pub fn from_color<C: Into<Color>>(state: &mut Graphics2D, color: C) -> Result<Rc<Self>> {
+        use crate::image::Pixel;
+        let mut rgba = image::RgbaImage::new(1, 1);
+        rgba.get_pixel_mut(0, 0)
+            .channels_mut()
+            .copy_from_slice(&color.into().to_u8_array());
+        Self::from_rbga_image(state, &rgba)
+    }
+
+    fn from_rbga_image(
+        state: &mut Graphics2D,
+        diffuse_rgba: &image::RgbaImage,
+    ) -> Result<Rc<Self>> {
         let device = state.device();
         let texture_bind_group_layout = state.texture_bind_group_layout();
         let queue = state.queue();
 
-        let diffuse_image = image::load_from_memory(diffuse_bytes)?;
-        let diffuse_rgba = diffuse_image.to_rgba();
-
-        use image::GenericImageView;
-        let dimensions = diffuse_image.dimensions();
+        let dimensions = diffuse_rgba.dimensions();
         let size = wgpu::Extent3d {
             width: dimensions.0,
             height: dimensions.1,
