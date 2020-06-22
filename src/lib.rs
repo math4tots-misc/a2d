@@ -1,9 +1,10 @@
-extern crate anyhow;
 extern crate bytemuck;
-extern crate futures;
 extern crate image;
 extern crate wgpu;
-extern crate winit;
+
+/// We re-export the 'winit' crate so that downstream can have
+/// access to a version of winit that this library uses
+pub extern crate winit;
 
 macro_rules! err {
     ($fmt:expr $(, $args:expr)* $(,)?) => {

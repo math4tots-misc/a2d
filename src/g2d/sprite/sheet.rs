@@ -19,12 +19,7 @@ impl SpriteSheet {
     }
 
     pub fn from_color<C: Into<Color>>(state: &mut Graphics2D, color: C) -> Result<Rc<Self>> {
-        use crate::image::Pixel;
-        let mut rgba = image::RgbaImage::new(1, 1);
-        rgba.get_pixel_mut(0, 0)
-            .channels_mut()
-            .copy_from_slice(&color.into().to_u8_array());
-        Self::from_rbga_image(state, &rgba)
+        Self::from_colors::<C, Vec<C>>(state, 1, 1, vec![color])
     }
 
     pub fn from_colors<C, V>(
@@ -43,14 +38,22 @@ impl SpriteSheet {
             let color = color.into();
             pixels.extend(&color.to_u8_array())
         }
-        let rgba = match image::RgbaImage::from_raw(width, height, pixels) {
+        Self::from_rgba_bytes(state, width, height, pixels)
+    }
+
+    pub fn from_rgba_bytes(state: &mut Graphics2D, width: u32, height: u32, bytes: Vec<u8>) -> Result<Rc<Self>> {
+        let rgba = match image::RgbaImage::from_raw(width, height, bytes) {
             Some(img) => img,
-            None => err!("Failed to create image from colors for SpriteSheet"),
+            None => err!("Failed to create image from rgba bytes for SpriteSheet"),
         };
         Self::from_rbga_image(state, &rgba)
     }
 
-    pub fn from_rbga_image(
+    /// This method is private because we don't want to expose the `image` crate
+    /// as a dependency.
+    /// The version of `image` we use might not match with the version
+    /// that the binary crate uses.
+    fn from_rbga_image(
         state: &mut Graphics2D,
         diffuse_rgba: &image::RgbaImage,
     ) -> Result<Rc<Self>> {
