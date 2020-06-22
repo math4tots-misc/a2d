@@ -28,7 +28,7 @@ pub fn main() {
         .unwrap();
 
     let mut state = block_on(Graphics2D::from_winit_window(&window)).unwrap();
-    state.set_scale([ WIDTH, HEIGHT ]);
+    state.set_scale([WIDTH, HEIGHT]);
     let sheet = SpriteSheet::from_color(&mut state, [1.0, 0.5, 0.5]).unwrap();
     let mut batch1 = SpriteBatch::new(sheet);
     batch1.add(Instance::new(
@@ -56,7 +56,8 @@ pub fn main() {
         [-0.1, 0.0, 0.1, 0.1],
         0.0,
     ));
-    let mut batch2 = SpriteBatch::new(SpriteSheet::from_color(&mut state, [0.5, 0.5, 0.1]).unwrap());
+    let mut batch2 =
+        SpriteBatch::new(SpriteSheet::from_color(&mut state, [0.5, 0.5, 0.1]).unwrap());
     batch2.add(Instance::new(
         [0.0, 0.0, 1.0, 1.0],
         [0.5, 0.0, WIDTH, HEIGHT / 2.0],

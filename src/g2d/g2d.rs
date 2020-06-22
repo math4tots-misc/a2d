@@ -89,7 +89,7 @@ impl Graphics2D {
                     visibility: wgpu::ShaderStage::VERTEX,
                     ty: wgpu::BindingType::UniformBuffer { dynamic: false },
                 }],
-                label: Some("uniform_bind_group_layout"),
+                label: Some("scale_uniform_bind_group_layout"),
             });
 
         // build the pipeline
@@ -179,6 +179,10 @@ impl Graphics2D {
     }
 
     pub fn render(&mut self, batches: &[&SpriteBatch]) {
+        struct BatchInfo<'a> {
+            batch: &'a SpriteBatch,
+            instance_buffer: wgpu::Buffer,
+        }
         let batches_with_instance_buffers = {
             let mut vec = Vec::new();
             for batch in batches {
@@ -186,7 +190,10 @@ impl Graphics2D {
                     bytemuck::cast_slice(batch.instances()),
                     wgpu::BufferUsage::VERTEX,
                 );
-                vec.push((batch, instance_buffer));
+                vec.push(BatchInfo {
+                    batch,
+                    instance_buffer,
+                });
             }
             vec
         };
@@ -227,7 +234,9 @@ impl Graphics2D {
                 depth_stencil_attachment: None,
             });
             render_pass.set_pipeline(&self.render_pipeline);
-            for (batch, instance_buffer) in &batches_with_instance_buffers {
+            for info in &batches_with_instance_buffers {
+                let batch = info.batch;
+                let instance_buffer = &info.instance_buffer;
                 render_pass.set_bind_group(0, batch.sheet().bind_group(), &[]);
                 render_pass.set_bind_group(1, &scale_uniform_bind_group, &[]);
                 render_pass.set_vertex_buffer(0, instance_buffer, 0, 0);
