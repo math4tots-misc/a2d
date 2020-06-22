@@ -1,10 +1,12 @@
 use crate::Instance;
 use crate::SpriteSheet;
+use crate::Translation;
 use std::rc::Rc;
 
 pub struct SpriteBatch {
     sheet: Rc<SpriteSheet>,
     instances: Vec<Instance>,
+    translation: Option<Translation>,
 }
 
 impl SpriteBatch {
@@ -12,11 +14,20 @@ impl SpriteBatch {
         Self {
             sheet,
             instances: Vec::new(),
+            translation: None,
         }
     }
 
     pub fn sheet(&self) -> &SpriteSheet {
         &self.sheet
+    }
+
+    pub fn translation(&self) -> &Option<Translation> {
+        &self.translation
+    }
+
+    pub fn set_translation(&mut self, translation: Option<Translation>) {
+        self.translation = translation;
     }
 
     pub fn instances(&self) -> &[Instance] {

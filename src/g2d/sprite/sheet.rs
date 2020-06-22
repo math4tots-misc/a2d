@@ -3,6 +3,7 @@ use crate::Graphics2D;
 use crate::Result;
 use std::rc::Rc;
 
+/// An image loaded in GPU memory ready to be used with a SpriteBatch
 pub struct SpriteSheet {
     bind_group: wgpu::BindGroup,
 }
@@ -41,7 +42,12 @@ impl SpriteSheet {
         Self::from_rgba_bytes(state, width, height, pixels)
     }
 
-    pub fn from_rgba_bytes(state: &mut Graphics2D, width: u32, height: u32, bytes: Vec<u8>) -> Result<Rc<Self>> {
+    pub fn from_rgba_bytes(
+        state: &mut Graphics2D,
+        width: u32,
+        height: u32,
+        bytes: Vec<u8>,
+    ) -> Result<Rc<Self>> {
         let rgba = match image::RgbaImage::from_raw(width, height, bytes) {
             Some(img) => img,
             None => err!("Failed to create image from rgba bytes for SpriteSheet"),

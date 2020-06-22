@@ -17,6 +17,7 @@ mod error;
 mod g2d;
 mod res;
 mod shaders;
+mod transform;
 
 pub use color::Color;
 pub use error::A2DError;
@@ -26,3 +27,6 @@ pub use g2d::Instance;
 pub use g2d::Rect;
 pub use g2d::SpriteBatch;
 pub use g2d::SpriteSheet;
+
+use transform::Scaling;
+use transform::Translation;
