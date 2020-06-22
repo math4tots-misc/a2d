@@ -1,4 +1,5 @@
 use crate::Graphics2D;
+use crate::Result;
 use std::rc::Rc;
 
 pub struct SpriteSheet {
@@ -6,13 +7,13 @@ pub struct SpriteSheet {
 }
 
 impl SpriteSheet {
-    pub fn from_bytes(state: &mut Graphics2D, diffuse_bytes: &[u8]) -> Rc<Self> {
+    pub fn from_bytes(state: &mut Graphics2D, diffuse_bytes: &[u8]) -> Result<Rc<Self>> {
         let device = state.device();
         let texture_bind_group_layout = state.texture_bind_group_layout();
         let queue = state.queue();
 
-        let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
-        let diffuse_rgba = diffuse_image.as_rgba8().unwrap();
+        let diffuse_image = image::load_from_memory(diffuse_bytes)?;
+        let diffuse_rgba = diffuse_image.to_rgba();
 
         use image::GenericImageView;
         let dimensions = diffuse_image.dimensions();
@@ -93,7 +94,7 @@ impl SpriteSheet {
             ],
             label: Some("diffuse_bind_group"),
         });
-        Rc::new(Self { bind_group })
+        Ok(Rc::new(Self { bind_group }))
     }
 
     pub(crate) fn bind_group(&self) -> &wgpu::BindGroup {

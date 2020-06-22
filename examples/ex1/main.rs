@@ -23,9 +23,9 @@ pub fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let mut state = block_on(Graphics2D::from_winit_window(&window));
+    let mut state = block_on(Graphics2D::from_winit_window(&window)).unwrap();
     state.set_scale([1200.0 / 800.0, 1.0]);
-    let sheet = SpriteSheet::from_bytes(&mut state, include_bytes!("happy-tree.png"));
+    let sheet = SpriteSheet::from_bytes(&mut state, include_bytes!("happy-tree.png")).unwrap();
     let mut batch = SpriteBatch::new(sheet);
     batch.add(Instance::new(
         [0.0, 0.0, 0.75, 0.75],

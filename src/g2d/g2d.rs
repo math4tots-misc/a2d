@@ -1,5 +1,6 @@
 use crate::shaders;
 use crate::Instance;
+use crate::Result;
 use crate::SpriteBatch;
 
 pub struct Graphics2D {
@@ -19,10 +20,10 @@ pub struct Graphics2D {
 }
 
 impl Graphics2D {
-    pub async fn from_winit_window(window: &winit::window::Window) -> Self {
+    pub async fn from_winit_window(window: &winit::window::Window) -> Result<Self> {
         let size = window.inner_size();
         let surface = wgpu::Surface::create(window);
-        let adapter = wgpu::Adapter::request(
+        let adapter = match wgpu::Adapter::request(
             &wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::Default,
                 compatible_surface: Some(&surface),
@@ -30,7 +31,10 @@ impl Graphics2D {
             wgpu::BackendBit::PRIMARY,
         )
         .await
-        .unwrap();
+        {
+            Some(adapter) => adapter,
+            None => err!(""),
+        };
 
         let (device, queue) = adapter
             .request_device(&wgpu::DeviceDescriptor {
@@ -50,8 +54,8 @@ impl Graphics2D {
         let swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
         // compile shaders
-        let vs_data = wgpu::read_spirv(std::io::Cursor::new(shaders::VERT)).unwrap();
-        let fs_data = wgpu::read_spirv(std::io::Cursor::new(shaders::FRAG)).unwrap();
+        let vs_data = wgpu::read_spirv(std::io::Cursor::new(shaders::VERT))?;
+        let fs_data = wgpu::read_spirv(std::io::Cursor::new(shaders::FRAG))?;
         let vs_module = device.create_shader_module(&vs_data);
         let fs_module = device.create_shader_module(&fs_data);
 
@@ -133,7 +137,7 @@ impl Graphics2D {
             wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
         );
 
-        Self {
+        Ok(Self {
             surface,
             adapter,
             device,
@@ -145,7 +149,7 @@ impl Graphics2D {
             texture_bind_group_layout,
             scale,
             scale_uniform_buffer,
-        }
+        })
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
