@@ -13,7 +13,6 @@ fn main() {
 fn build_shaders() {
     let mut compiler = Compiler::new().unwrap();
     let out_dir = env::var("OUT_DIR").unwrap();
-    println!("cargo:warning={}", out_dir);
     build_shader(
         &mut compiler,
         &format!("{}/shader.vert.spirv", out_dir),
