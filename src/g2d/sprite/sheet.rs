@@ -37,8 +37,8 @@ impl SpriteSheet {
         C: Into<Color>,
         V: IntoIterator<Item = C>,
     {
-        assert_eq!(width * height, colors.len());
-        let pixels = Vec::new();
+        assert_eq!(width * height, colors.len() as u32);
+        let mut pixels = Vec::new();
         for color in colors {
             let color = color.into();
             pixels.extend(&color.to_u8_array())
