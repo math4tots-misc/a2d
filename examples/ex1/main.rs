@@ -17,13 +17,14 @@ pub fn main() {
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_inner_size(LogicalSize {
-            width: 800,
+            width: 1200,
             height: 800,
         })
         .build(&event_loop)
         .unwrap();
 
     let mut state = block_on(Graphics2D::from_winit_window(&window));
+    state.set_scale([1200.0 / 800.0, 1.0]);
     let sheet = SpriteSheet::from_bytes(&mut state, include_bytes!("happy-tree.png"));
     let mut batch = SpriteBatch::new(sheet);
     batch.add(Instance::new(
@@ -46,6 +47,11 @@ pub fn main() {
         [0.5, 0.5, 1.0, 1.0],
         0.0,
     ));
+    batch.add(Instance::new(
+        [0.0, 0.75, 0.2, 1.0],
+        [-0.1, 0.0, 0.1, 0.1],
+        0.0,
+    ));
 
     let start = std::time::SystemTime::now();
 
@@ -57,6 +63,7 @@ pub fn main() {
                 instance.set_rotation((dur / 6.0).fract() * 2.0 * std::f32::consts::PI);
             }
             state.render(&[&batch]);
+            std::thread::yield_now();
         }
         Event::MainEventsCleared => {
             window.request_redraw();
@@ -74,6 +81,23 @@ pub fn main() {
                 } => {
                     *control_flow = ControlFlow::Exit;
                 }
+                KeyboardInput {
+                    state: ElementState::Pressed,
+                    virtual_keycode: Some(code),
+                    ..
+                } => match code {
+                    VirtualKeyCode::Up => {
+                        let scale = state.scale();
+                        let scale = [scale[0] * 2.0, scale[1] * 2.0];
+                        state.set_scale(scale);
+                    }
+                    VirtualKeyCode::Down => {
+                        let scale = state.scale();
+                        let scale = [scale[0] / 2.0, scale[1] / 2.0];
+                        state.set_scale(scale);
+                    }
+                    _ => {}
+                },
                 _ => {}
             },
             WindowEvent::Resized(physical_size) => {

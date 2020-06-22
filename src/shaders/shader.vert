@@ -9,6 +9,10 @@ layout(location=4) in float rotate_theta;
 
 layout(location=0) out vec2 v_tex_coords;
 
+layout(set = 1, binding = 0) uniform Uniform {
+    vec2 u_scale;
+};
+
 const vec2 positions[4] = vec2[4](
     vec2(0.0, 0.0),
     vec2(1.0, 0.0),
@@ -97,5 +101,9 @@ void main() {
     vec3 rot_pos3 = rotate_around_dst_center * dst_pos3;
 
     v_tex_coords = vec2(src_pos3);
-    gl_Position = vec4(vec2(to_wgpu * rot_pos3), 0.0, 1.0);
+    gl_Position = vec4(
+        vec2(to_wgpu * (rot_pos3 / vec3(u_scale, 1.0))),
+        0.0,
+        1.0
+    );
 }

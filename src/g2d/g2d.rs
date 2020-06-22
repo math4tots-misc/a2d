@@ -10,8 +10,12 @@ pub struct Graphics2D {
     queue: wgpu::Queue,
     sc_desc: wgpu::SwapChainDescriptor,
     swap_chain: wgpu::SwapChain,
+    scale_uniform_bind_group_layout: wgpu::BindGroupLayout,
     render_pipeline: wgpu::RenderPipeline,
     texture_bind_group_layout: wgpu::BindGroupLayout,
+
+    scale: [f32; 2],
+    scale_uniform_buffer: wgpu::Buffer,
 }
 
 impl Graphics2D {
@@ -73,10 +77,21 @@ impl Graphics2D {
                 label: Some("texture_bind_group_layout"),
             });
 
+        // scale uniform bind layout
+        let scale_uniform_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                bindings: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStage::VERTEX,
+                    ty: wgpu::BindingType::UniformBuffer { dynamic: false },
+                }],
+                label: Some("uniform_bind_group_layout"),
+            });
+
         // build the pipeline
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                bind_group_layouts: &[&texture_bind_group_layout],
+                bind_group_layouts: &[&texture_bind_group_layout, &scale_uniform_bind_group_layout],
             });
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             layout: &render_pipeline_layout,
@@ -112,6 +127,12 @@ impl Graphics2D {
             alpha_to_coverage_enabled: false,
         });
 
+        let scale = [1.0, 1.0];
+        let scale_uniform_buffer = device.create_buffer_with_data(
+            bytemuck::cast_slice(&scale),
+            wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+        );
+
         Self {
             surface,
             adapter,
@@ -119,8 +140,11 @@ impl Graphics2D {
             queue,
             sc_desc,
             swap_chain,
+            scale_uniform_bind_group_layout,
             render_pipeline,
             texture_bind_group_layout,
+            scale,
+            scale_uniform_buffer,
         }
     }
 
@@ -128,6 +152,26 @@ impl Graphics2D {
         self.sc_desc.width = new_size.width;
         self.sc_desc.height = new_size.height;
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
+    }
+
+    /// By default, the screen coordinates are [0, 0] for the
+    /// upper-left corner and [1, 1] for the lower-right corner.
+    /// The coordinates of the lower-right corner may be customized
+    /// with `set_scale`. The `scale` method returns the currently
+    /// set [max_x, max_y] values for the lower-right corner.
+    pub fn scale(&self) -> [f32; 2] {
+        self.scale
+    }
+
+    /// Sets the the scale to set the coordinates of the
+    /// lower-right corner (the upper-left is always [0, 0]).
+    /// See the method `scale` for more info.
+    pub fn set_scale(&mut self, new_scale: [f32; 2]) {
+        self.scale = new_scale;
+        self.scale_uniform_buffer = self.device.create_buffer_with_data(
+            bytemuck::cast_slice(&self.scale),
+            wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+        );
     }
 
     pub fn render(&mut self, batches: &[&SpriteBatch]) {
@@ -142,6 +186,17 @@ impl Graphics2D {
             }
             vec
         };
+        let scale_uniform_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &self.scale_uniform_bind_group_layout,
+            bindings: &[wgpu::Binding {
+                binding: 0,
+                resource: wgpu::BindingResource::Buffer {
+                    buffer: &self.scale_uniform_buffer,
+                    range: 0..std::mem::size_of_val(&self.scale) as wgpu::BufferAddress,
+                },
+            }],
+            label: Some("scale_uniform_bind_group"),
+        });
         let frame = self
             .swap_chain
             .get_next_texture()
@@ -170,6 +225,7 @@ impl Graphics2D {
             render_pass.set_pipeline(&self.render_pipeline);
             for (batch, instance_buffer) in &batches_with_instance_buffers {
                 render_pass.set_bind_group(0, batch.sheet().bind_group(), &[]);
+                render_pass.set_bind_group(1, &scale_uniform_bind_group, &[]);
                 render_pass.set_vertex_buffer(0, instance_buffer, 0, 0);
                 render_pass.draw(0..6, 0..batch.instances().len() as u32);
             }
