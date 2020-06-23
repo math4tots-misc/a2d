@@ -42,6 +42,10 @@ impl SpriteBatch {
         &mut self.instances[i]
     }
 
+    pub fn len(&self) -> usize {
+        self.instances.len()
+    }
+
     pub fn set(&mut self, i: usize, inst: Instance) {
         self.instances[i] = inst
     }

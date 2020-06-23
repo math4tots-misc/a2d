@@ -1,8 +1,8 @@
 use crate::shaders;
 use crate::Instance;
 use crate::Result;
-use crate::SpriteBatch;
 use crate::Scaling;
+use crate::SpriteBatch;
 
 pub struct Graphics2D {
     surface: wgpu::Surface,
@@ -149,10 +149,8 @@ impl Graphics2D {
         });
 
         let scale = [1.0, 1.0];
-        let scale_uniform_buffer = device.create_buffer_with_data(
-            bytemuck::cast_slice(&scale),
-            wgpu::BufferUsage::UNIFORM,
-        );
+        let scale_uniform_buffer = device
+            .create_buffer_with_data(bytemuck::cast_slice(&scale), wgpu::BufferUsage::UNIFORM);
 
         Ok(Self {
             surface,
@@ -213,17 +211,18 @@ impl Graphics2D {
                     bytemuck::cast_slice(&batch.translation()),
                     wgpu::BufferUsage::UNIFORM,
                 );
-                let translation_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                    layout: &self.translation_uniform_bind_group_layout,
-                    bindings: &[wgpu::Binding {
-                        binding: 0,
-                        resource: wgpu::BindingResource::Buffer {
-                            buffer: &translation_buffer,
-                            range: 0..std::mem::size_of::<Scaling>() as wgpu::BufferAddress,
-                        },
-                    }],
-                    label: Some("per_batch_scale_uniform_bind_group"),
-                });
+                let translation_bind_group =
+                    self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                        layout: &self.translation_uniform_bind_group_layout,
+                        bindings: &[wgpu::Binding {
+                            binding: 0,
+                            resource: wgpu::BindingResource::Buffer {
+                                buffer: &translation_buffer,
+                                range: 0..std::mem::size_of::<Scaling>() as wgpu::BufferAddress,
+                            },
+                        }],
+                        label: Some("per_batch_scale_uniform_bind_group"),
+                    });
                 vec.push(BatchInfo {
                     batch,
                     instance_buffer,

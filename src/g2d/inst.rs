@@ -25,7 +25,7 @@ pub struct Instance {
     /// Upper left corner is the origin [0, 0].
     dst_lr: [f32; 2],
 
-    /// counter-clockwise rotation in radians.
+    /// clockwise rotation in radians.
     /// around the center of the rectangle after moving to the dest rectangle.
     rotate: f32,
 }

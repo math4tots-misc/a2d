@@ -1,7 +1,10 @@
+use crate::Point;
+
 /// Rect struct to make it more convenient to
 /// construct sprite instances
 /// Assumes a2d coordinates (i.e. origin at upper-left
 /// corner)
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Rect {
     upper_left: [f32; 2],
     lower_right: [f32; 2],
@@ -55,6 +58,12 @@ impl From<[f32; 4]> for Rect {
 impl From<[[f32; 2]; 2]> for Rect {
     fn from(arr: [[f32; 2]; 2]) -> Rect {
         [arr[0][0], arr[0][1], arr[1][0], arr[1][1]].into()
+    }
+}
+
+impl From<[Point; 2]> for Rect {
+    fn from(points: [Point; 2]) -> Self {
+        [points[0].to_array(), points[1].to_array()].into()
     }
 }
 

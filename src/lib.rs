@@ -18,6 +18,7 @@ mod g2d;
 mod res;
 mod shaders;
 mod transform;
+mod txt;
 
 pub use color::Color;
 pub use error::A2DError;
@@ -26,7 +27,12 @@ pub use g2d::Graphics2D;
 pub use g2d::Instance;
 pub use g2d::Rect;
 pub use g2d::SpriteBatch;
+pub use g2d::SpriteMap;
+pub use g2d::SpriteMapDimensions;
 pub use g2d::SpriteSheet;
+pub use transform::Dimensions;
+pub use transform::Point;
+pub use txt::TextGrid;
 
 use transform::Scaling;
 use transform::Translation;
