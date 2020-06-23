@@ -39,7 +39,7 @@ pub fn main() {
     // for r in 0..SIZE {
     //     for c in 0..SIZE {
     //         let mut batch = SpriteBatch::new(sheet.clone());
-    //         batch.set_translation(Some([c as f32 / 100.0, r as f32 / 100.0]));
+    //         batch.set_translation([c as f32 / 100.0, r as f32 / 100.0]);
     //         batch.add(Instance::new(
     //             [0.0, 0.0, 1.0, 1.0],
     //             [0.0, 0.0, 1.0 / SIZE as f32 / 2.0, 1.0 / SIZE as f32 / 2.0],
@@ -56,11 +56,13 @@ pub fn main() {
         let oy = r as f32 * (1.0 / SIZE as f32);
         for c in 0..SIZE {
             let ox = c as f32 * (1.0 / SIZE as f32);
-            batch.add(Instance::new(
-                [0.0, 0.0, 1.0, 1.0],
-                [ox, oy, ox + len, oy + len],
-                3.14 / 2.0,
-            ));
+            if is_prime(r + c) {
+                batch.add(Instance::new(
+                    [0.0, 0.0, 1.0, 1.0],
+                    [ox, oy, ox + len, oy + len],
+                    3.14 / 2.0,
+                ));
+            }
         }
     }
 
@@ -80,7 +82,7 @@ pub fn main() {
             {
                 let dur = start.elapsed().unwrap().as_secs_f32();
                 let rot = (dur / 12.0).fract();
-                batch.set_translation(Some([WIDTH * rot, 0.0]));
+                batch.set_translation([WIDTH * rot, 0.0]);
             }
 
             state.render(&[&batch]);
@@ -132,4 +134,15 @@ pub fn main() {
         },
         _ => {}
     })
+}
+
+fn is_prime(x: usize) -> bool {
+    let mut i = 2;
+    while i * i <= x {
+        if x % i == 0 {
+            return false;
+        }
+        i += 1;
+    }
+    true
 }

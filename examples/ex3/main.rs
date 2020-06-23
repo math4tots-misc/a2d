@@ -32,7 +32,7 @@ pub fn main() {
     state.set_scale([WIDTH, HEIGHT]);
     let sheet = SpriteSheet::from_color(&mut state, [1.0, 0.5, 0.5]).unwrap();
     let mut batch1 = SpriteBatch::new(sheet);
-    batch1.set_translation(Some([0.5, 0.0]));
+    batch1.set_translation([0.5, 0.0]);
     batch1.add(Instance::new(
         [0.0, 0.0, 1.0, 1.0],
         [0.25, 0.25, 0.75, 0.75],

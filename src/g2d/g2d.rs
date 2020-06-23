@@ -2,7 +2,6 @@ use crate::shaders;
 use crate::Instance;
 use crate::Result;
 use crate::SpriteBatch;
-use crate::Translation;
 use crate::Scaling;
 
 pub struct Graphics2D {
@@ -20,8 +19,6 @@ pub struct Graphics2D {
 
     scale: Scaling,
     scale_uniform_buffer: wgpu::Buffer,
-
-    default_translation_uniform_buffer: wgpu::Buffer,
 }
 
 impl Graphics2D {
@@ -157,12 +154,6 @@ impl Graphics2D {
             wgpu::BufferUsage::UNIFORM,
         );
 
-        let default_translation: Translation = [0.0, 0.0];
-        let default_translation_uniform_buffer = device.create_buffer_with_data(
-            bytemuck::cast_slice(&default_translation),
-            wgpu::BufferUsage::UNIFORM,
-        );
-
         Ok(Self {
             surface,
             adapter,
@@ -176,7 +167,6 @@ impl Graphics2D {
             texture_bind_group_layout,
             scale,
             scale_uniform_buffer,
-            default_translation_uniform_buffer,
         })
     }
 
@@ -210,7 +200,7 @@ impl Graphics2D {
         struct BatchInfo<'a> {
             batch: &'a SpriteBatch,
             instance_buffer: wgpu::Buffer,
-            translation_bind_group: Option<(wgpu::Buffer, wgpu::BindGroup)>,
+            translation_bind_group: wgpu::BindGroup,
         }
         let batches_with_instance_buffers = {
             let mut vec = Vec::new();
@@ -219,29 +209,21 @@ impl Graphics2D {
                     bytemuck::cast_slice(batch.instances()),
                     wgpu::BufferUsage::VERTEX,
                 );
-                let translation_bind_group = match batch.translation() {
-                    Some(translation) => {
-                        // TODO: Figure out if it's ok to call create_buffer_with_data
-                        // like this for every batch group every frame
-                        let buffer = self.device.create_buffer_with_data(
-                            bytemuck::cast_slice(translation),
-                            wgpu::BufferUsage::UNIFORM,
-                        );
-                        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                            layout: &self.translation_uniform_bind_group_layout,
-                            bindings: &[wgpu::Binding {
-                                binding: 0,
-                                resource: wgpu::BindingResource::Buffer {
-                                    buffer: &buffer,
-                                    range: 0..std::mem::size_of::<Scaling>() as wgpu::BufferAddress,
-                                },
-                            }],
-                            label: Some("per_batch_scale_uniform_bind_group"),
-                        });
-                        Some((buffer, bind_group))
-                    }
-                    None => None,
-                };
+                let translation_buffer = self.device.create_buffer_with_data(
+                    bytemuck::cast_slice(&batch.translation()),
+                    wgpu::BufferUsage::UNIFORM,
+                );
+                let translation_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    layout: &self.translation_uniform_bind_group_layout,
+                    bindings: &[wgpu::Binding {
+                        binding: 0,
+                        resource: wgpu::BindingResource::Buffer {
+                            buffer: &translation_buffer,
+                            range: 0..std::mem::size_of::<Scaling>() as wgpu::BufferAddress,
+                        },
+                    }],
+                    label: Some("per_batch_scale_uniform_bind_group"),
+                });
                 vec.push(BatchInfo {
                     batch,
                     instance_buffer,
@@ -260,17 +242,6 @@ impl Graphics2D {
                 },
             }],
             label: Some("default_scale_uniform_bind_group"),
-        });
-        let default_translation_uniform_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &self.translation_uniform_bind_group_layout,
-            bindings: &[wgpu::Binding {
-                binding: 0,
-                resource: wgpu::BindingResource::Buffer {
-                    buffer: &self.default_translation_uniform_buffer,
-                    range: 0..std::mem::size_of::<Translation>() as wgpu::BufferAddress,
-                },
-            }],
-            label: Some("default_translation_uniform_bind_group"),
         });
         let frame = self
             .swap_chain
@@ -301,12 +272,10 @@ impl Graphics2D {
             for info in &batches_with_instance_buffers {
                 let batch = info.batch;
                 let instance_buffer = &info.instance_buffer;
+                let translation_bind_group = &info.translation_bind_group;
                 render_pass.set_bind_group(0, batch.sheet().bind_group(), &[]);
                 render_pass.set_bind_group(1, &scale_uniform_bind_group, &[]);
-                render_pass.set_bind_group(2, match &info.translation_bind_group {
-                    Some((_, bind_group)) => bind_group,
-                    None => &default_translation_uniform_bind_group,
-                }, &[]);
+                render_pass.set_bind_group(2, translation_bind_group, &[]);
                 render_pass.set_vertex_buffer(0, instance_buffer, 0, 0);
                 render_pass.draw(0..6, 0..batch.instances().len() as u32);
             }

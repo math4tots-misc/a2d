@@ -15,3 +15,6 @@ get the compiler to help me enforce. I mention these here:
         This means that if you have a function that accepts or
         returns a type from a third party crate, the
         values may not actually be compatible
+* Performance and number of sprite batches
+    * It's just assumed that if you have too many sprite batches
+        things will run slow.

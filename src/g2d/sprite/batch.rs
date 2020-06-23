@@ -6,7 +6,7 @@ use std::rc::Rc;
 pub struct SpriteBatch {
     sheet: Rc<SpriteSheet>,
     instances: Vec<Instance>,
-    translation: Option<Translation>,
+    translation: Translation,
 }
 
 impl SpriteBatch {
@@ -14,7 +14,7 @@ impl SpriteBatch {
         Self {
             sheet,
             instances: Vec::new(),
-            translation: None,
+            translation: [0.0, 0.0],
         }
     }
 
@@ -22,11 +22,11 @@ impl SpriteBatch {
         &self.sheet
     }
 
-    pub fn translation(&self) -> &Option<Translation> {
-        &self.translation
+    pub fn translation(&self) -> Translation {
+        self.translation
     }
 
-    pub fn set_translation(&mut self, translation: Option<Translation>) {
+    pub fn set_translation(&mut self, translation: Translation) {
         self.translation = translation;
     }
 
