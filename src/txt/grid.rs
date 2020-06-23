@@ -1,4 +1,3 @@
-use crate::Dimensions;
 use crate::Graphics2D;
 use crate::Result;
 use crate::SpriteBatch;
@@ -13,10 +12,14 @@ pub struct TextGrid {
 
 impl TextGrid {
     /// The layout of how the characters should be laid out in the sprite-sheet
-    const CHAR_MAP_LAYOUT_DIM: [u32; 2] = [15, 32];
+    const CHAR_MAP_LAYOUT_DIM: [u32; 2] = [3, 32];
 
     /// The width to height ratio of each drawn character rectangle
     pub const CHAR_WIDTH_TO_HEIGHT_RATIO: f32 = 3.0 / 4.0;
+
+    /// The ratio to trim off each of the source rectangles so that the borders
+    /// are not included in the draw
+    pub const PADDING_FACTOR: f32 = 0.05;
 
     /// loads the Courier sprite sheet embedded with A2D
     pub fn courier_sprite_sheet(graphics: &mut Graphics2D) -> Result<Rc<SpriteSheet>> {
@@ -36,13 +39,14 @@ impl TextGrid {
     /// You can call the `set_translation` method on it to move it to a different
     /// location if you'd like
     ///
-    pub fn new(
-        sheet: Rc<SpriteSheet>,
-        char_width: f32,
-        dim: [u32; 2],
-    ) -> Self {
+    pub fn new(sheet: Rc<SpriteSheet>, char_width: f32, dim: [u32; 2]) -> Self {
         let char_height = char_width / Self::CHAR_WIDTH_TO_HEIGHT_RATIO;
-        let mut smap = SpriteMap::new(sheet, Self::CHAR_MAP_LAYOUT_DIM, [char_width, char_height]);
+        let mut smap = SpriteMap::new(
+            sheet,
+            Self::CHAR_MAP_LAYOUT_DIM,
+            [char_width, char_height],
+            0.10,
+        );
         let [nrows, ncols] = dim;
         let empty_cell_index = Self::char_to_cell_index(' ');
         for r in 0..nrows {
@@ -78,7 +82,8 @@ impl TextGrid {
             if c < '!' as u32 || c >= 127 {
                 // if it's not printable ASCII, point to the last
                 // cell
-                Self::CHAR_MAP_LAYOUT_DIM[0] * Self::CHAR_MAP_LAYOUT_DIM[1] - 1
+                let [max_r, max_c] = Self::CHAR_MAP_LAYOUT_DIM;
+                max_r * max_c - 1
             } else {
                 c
             }

@@ -1,8 +1,8 @@
 mod batch;
-mod grid;
+mod map;
 mod sheet;
 
 pub use batch::SpriteBatch;
-pub use grid::SpriteMap;
-pub use grid::SpriteMapDimensions;
+pub use map::SpriteMap;
+pub use map::SpriteMapDimensions;
 pub use sheet::SpriteSheet;

@@ -1,8 +1,5 @@
 extern crate a2d;
 use a2d::Graphics2D;
-use a2d::Instance;
-use a2d::SpriteBatch;
-use a2d::SpriteSheet;
 use a2d::TextGrid;
 use futures::executor::block_on;
 use winit::{
@@ -12,33 +9,29 @@ use winit::{
     window::WindowBuilder,
 };
 
-const DISPLAY_WIDTH: f32 = 1200.0;
-const DISPLAY_HEIGHT: f32 = 800.0;
-const WIDTH: f32 = DISPLAY_WIDTH / DISPLAY_HEIGHT;
+const DEFAULT_DISPLAY_WIDTH: f32 = 1200.0;
+const DEFAULT_DISPLAY_HEIGHT: f32 = 800.0;
+const WIDTH: f32 = DEFAULT_DISPLAY_WIDTH / DEFAULT_DISPLAY_HEIGHT;
 const HEIGHT: f32 = 1.0;
 
-/// Lots of sprite batches with lots of translation
+/// Text example
 pub fn main() {
     // simple_logger::init_with_level(log::Level::Debug).unwrap();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_inner_size(LogicalSize {
-            width: DISPLAY_WIDTH,
-            height: DISPLAY_HEIGHT,
+            width: DEFAULT_DISPLAY_WIDTH,
+            height: DEFAULT_DISPLAY_HEIGHT,
         })
         .build(&event_loop)
         .unwrap();
 
     let mut state = block_on(Graphics2D::from_winit_window(&window)).unwrap();
     state.set_scale([WIDTH, HEIGHT]);
-    let sheet = SpriteSheet::from_color(&mut state, [1.0, 0.5, 0.5]).unwrap();
-
     let char_sheet = TextGrid::courier_sprite_sheet(&mut state).unwrap();
-    let mut tgrid = TextGrid::new(char_sheet, 1.0 / 80.0, [40, 80]);
+    let mut tgrid = TextGrid::new(char_sheet, WIDTH / 40.0, [15, 10]);
 
     tgrid.write(0, 0, "Hello world!");
-
-    let start = std::time::SystemTime::now();
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::RedrawRequested(_) => {
@@ -93,15 +86,4 @@ pub fn main() {
         },
         _ => {}
     })
-}
-
-fn is_prime(x: usize) -> bool {
-    let mut i = 2;
-    while i * i <= x {
-        if x % i == 0 {
-            return false;
-        }
-        i += 1;
-    }
-    true
 }

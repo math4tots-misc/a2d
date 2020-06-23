@@ -16,7 +16,7 @@ impl SpriteSheet {
     pub fn from_bytes(state: &mut Graphics2D, diffuse_bytes: &[u8]) -> Result<Rc<Self>> {
         let diffuse_image = image::load_from_memory(diffuse_bytes)?;
         let diffuse_rgba = diffuse_image.to_rgba();
-        Self::from_rbga_image(state, &diffuse_rgba)
+        Self::from_rbga_image(state, diffuse_rgba)
     }
 
     pub fn from_color<C: Into<Color>>(state: &mut Graphics2D, color: C) -> Result<Rc<Self>> {
@@ -52,17 +52,14 @@ impl SpriteSheet {
             Some(img) => img,
             None => err!("Failed to create image from rgba bytes for SpriteSheet"),
         };
-        Self::from_rbga_image(state, &rgba)
+        Self::from_rbga_image(state, rgba)
     }
 
     /// This method is private because we don't want to expose the `image` crate
     /// as a dependency.
     /// The version of `image` we use might not match with the version
     /// that the binary crate uses.
-    fn from_rbga_image(
-        state: &mut Graphics2D,
-        diffuse_rgba: &image::RgbaImage,
-    ) -> Result<Rc<Self>> {
+    fn from_rbga_image(state: &mut Graphics2D, diffuse_rgba: image::RgbaImage) -> Result<Rc<Self>> {
         let device = state.device();
         let texture_bind_group_layout = state.texture_bind_group_layout();
         let queue = state.queue();

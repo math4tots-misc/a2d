@@ -20,19 +20,31 @@ pub struct SpriteMap {
     /// This way, when drawing sprites all of the same size, you only have
     /// to specify the dimensions once.
     default_dst_dim: Dimensions,
+
+    /// The amount to trim border by as a factor between 0 and 1, with
+    /// 1 trimming everything down to a point, and 0 trimming nothing
+    /// around the border
+    border_trim_factor: f32,
 }
 
 impl SpriteMap {
-    pub fn new<D, DD>(sheet: Rc<SpriteSheet>, dimensions: D, default_dst_dim: DD) -> Self
+    pub fn new<D, DD>(
+        sheet: Rc<SpriteSheet>,
+        dimensions: D,
+        default_dst_dim: DD,
+        border_trim_factor: f32,
+    ) -> Self
     where
         D: Into<SpriteMapDimensions>,
         DD: Into<Dimensions>,
     {
+        assert!(0.0 <= border_trim_factor && border_trim_factor <= 1.0);
         let batch = SpriteBatch::new(sheet);
         Self {
             batch,
             dimensions: dimensions.into(),
             default_dst_dim: default_dst_dim.into(),
+            border_trim_factor,
         }
     }
 
@@ -58,25 +70,23 @@ impl SpriteMap {
 
     /// Sets the sprite at instance index i to use the sprite cell indicated by the given cell_index
     pub fn set_cell(&mut self, instance_index: usize, cell_index: u32) {
-        let [row, col] = self.cell_coord(cell_index);
-        let cell_width = self.cell_width();
-        let cell_height = self.cell_height();
-        let ul_x = cell_width * col as f32;
-        let lr_x = ul_x + cell_width;
-        let ul_y = cell_height * row as f32;
-        let lr_y = ul_y + cell_height;
+        let src_rect = self.rect_for_cell(cell_index);
         self.batch
             .get_mut(instance_index)
-            .set_src([ul_x, ul_y, lr_x, lr_y]);
+            .set_src(src_rect);
     }
 
     /// Adds a new instance using the image from the cell_index to a rectangle
     /// located at the given center
     pub fn add<P: Into<Point>>(&mut self, center: P, cell_index: u32) {
         let center = center.into();
-        let src_rect = self.dimensions.rect_for_cell(cell_index);
+        let src_rect = self.rect_for_cell(cell_index);
         let dst_rect = self.dst_rect(center);
         self.batch.add(Instance::new(src_rect, dst_rect, 0.0));
+    }
+
+    fn rect_for_cell(&self, cell_index: u32) -> Rect {
+        self.dimensions.rect_for_cell(cell_index, self.border_trim_factor)
     }
 
     fn dst_rect(&self, center: Point) -> Rect {
@@ -101,11 +111,11 @@ impl SpriteMap {
         self.batch.set_translation(translation)
     }
 
-    fn cell_width(&self) -> f32 {
+    pub fn cell_width(&self) -> f32 {
         self.dimensions.cell_width()
     }
 
-    fn cell_height(&self) -> f32 {
+    pub fn cell_height(&self) -> f32 {
         self.dimensions.cell_height()
     }
 }
@@ -129,14 +139,15 @@ impl SpriteMapDimensions {
     }
 
     /// Returns the rect
-    pub fn rect_for_cell(&self, cell_index: u32) -> Rect {
+    fn rect_for_cell(&self, cell_index: u32, border_trim_factor: f32) -> Rect {
         let [row, col] = self.cell_coord(cell_index);
         let cell_width = self.cell_width();
         let cell_height = self.cell_height();
-        let ul_x = cell_width * col as f32;
-        let lr_x = ul_x + cell_width;
-        let ul_y = cell_height * row as f32;
-        let lr_y = ul_y + cell_height;
+        let ul_x = cell_width * (col as f32 + border_trim_factor / 2.0);
+        let ul_y = cell_height * (row as f32 + border_trim_factor / 2.0);
+
+        let lr_x = ul_x + cell_width * (1.0 - border_trim_factor);
+        let lr_y = ul_y + cell_height * (1.0 - border_trim_factor);
         [ul_x, ul_y, lr_x, lr_y].into()
     }
 
