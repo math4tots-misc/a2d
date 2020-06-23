@@ -1,3 +1,4 @@
 //! Miscellaneous resources
 
-// pub(crate) const HAPPY_TREE_PNG: &[u8] = include_bytes!("happy-tree.png");
+/// Original IBM Courier charmap from wikipedia
+pub(crate) const COURIER_CHARMAP: &[u8] = include_bytes!("courier.png");
