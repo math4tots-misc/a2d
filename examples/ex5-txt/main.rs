@@ -82,6 +82,33 @@ impl State {
         self.incr();
     }
 
+    fn backspace(&mut self) {
+        self.decr();
+        self.text_grid.write_ch(self.coord, ' ');
+        self.set_cursor(self.coord);
+    }
+
+    fn enter(&mut self) {
+        let [row, _] = self.coord;
+        let [max_row, _] = self.text_grid.dimensions();
+        let row = std::cmp::min(row + 1, max_row - 1);
+        self.coord = [row, 0];
+        self.set_cursor(self.coord);
+    }
+
+    fn move_up(&mut self) {
+        let row = self.coord[0];
+        self.coord[0] = if row > 0 { row - 1 } else { 0 };
+        self.set_cursor(self.coord);
+    }
+
+    fn move_down(&mut self) {
+        let row = self.coord[0];
+        let max_row = self.text_grid.dimensions()[0];
+        self.coord[0] = if row < max_row { row + 1 } else { 0 };
+        self.set_cursor(self.coord);
+    }
+
     fn incr(&mut self) {
         let [mut row, mut col] = self.coord;
         let [max_row, max_col] = self.text_grid.dimensions();
@@ -96,6 +123,21 @@ impl State {
         }
         self.coord = [row, col];
         self.set_cursor(self.coord);
+    }
+
+    fn decr(&mut self) {
+        let [mut row, mut col] = self.coord;
+        let [_, max_col] = self.text_grid.dimensions();
+        if col > 0 {
+            col -= 1;
+        } else if row > 0 {
+            row -= 1;
+            col = max_col - 1;
+        } else {
+            row = 0;
+            col = 0;
+        }
+        self.coord = [row, col];
     }
 }
 
@@ -143,14 +185,25 @@ pub fn main() {
                     ..
                 } => match code {
                     VirtualKeyCode::Up => {
-                        let scale = graphics.scale();
-                        let scale = [scale[0] * 2.0, scale[1] * 2.0];
-                        graphics.set_scale(scale);
+                        state.move_up();
+                        // let scale = graphics.scale();
+                        // let scale = [scale[0] * 2.0, scale[1] * 2.0];
+                        // graphics.set_scale(scale);
                     }
                     VirtualKeyCode::Down => {
-                        let scale = graphics.scale();
-                        let scale = [scale[0] / 2.0, scale[1] / 2.0];
-                        graphics.set_scale(scale);
+                        state.move_down();
+                        // let scale = graphics.scale();
+                        // let scale = [scale[0] / 2.0, scale[1] / 2.0];
+                        // graphics.set_scale(scale);
+                    }
+                    VirtualKeyCode::Right => {
+                        state.incr();
+                    }
+                    VirtualKeyCode::Back => {
+                        state.backspace();
+                    }
+                    VirtualKeyCode::Return => {
+                        state.enter();
                     }
                     _ => {}
                 },
@@ -158,7 +211,9 @@ pub fn main() {
             },
             WindowEvent::ReceivedCharacter(ch) => {
                 println!("char = {}", ch);
-                state.put_ch(*ch);
+                if ch.is_ascii() && !ch.is_ascii_control() {
+                    state.put_ch(*ch);
+                }
             }
             WindowEvent::Resized(physical_size) => {
                 let width = physical_size.width;
