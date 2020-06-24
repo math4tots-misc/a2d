@@ -1,10 +1,10 @@
+use crate::Dimensions;
 use crate::Graphics2D;
+use crate::Rect;
 use crate::Result;
 use crate::SpriteBatch;
 use crate::SpriteMap;
 use crate::SpriteSheet;
-use crate::Rect;
-use crate::Dimensions;
 use std::rc::Rc;
 
 /// Convenience struct for drawing text on the screen.
@@ -65,7 +65,11 @@ impl TextGrid {
                 smap.add([x, y], empty_cell_index);
             }
         }
-        Self { smap, dim, char_dim: [char_width, char_height].into() }
+        Self {
+            smap,
+            dim,
+            char_dim: [char_width, char_height].into(),
+        }
     }
 
     /// The width of a single character cell

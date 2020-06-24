@@ -192,7 +192,8 @@ impl Graphics2D {
         Ok(TextGrid::new(sheet, char_width, dim))
     }
 
-    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    /// Call this method to notify A2D that the window has been resized
+    pub fn resized(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         self.sc_desc.width = new_size.width;
         self.sc_desc.height = new_size.height;
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);

@@ -20,7 +20,10 @@ const DEFAULT_HEIGHT: f32 = 1.0;
 
 fn normalized_dims(pixel_dims: [f32; 2]) -> [f32; 2] {
     let [width, height] = pixel_dims;
-    [width / DEFAULT_DISPLAY_WIDTH * DEFAULT_WIDTH, height / DEFAULT_DISPLAY_HEIGHT * DEFAULT_HEIGHT]
+    [
+        width / DEFAULT_DISPLAY_WIDTH * DEFAULT_WIDTH,
+        height / DEFAULT_DISPLAY_HEIGHT * DEFAULT_HEIGHT,
+    ]
 }
 
 struct State {
@@ -32,9 +35,12 @@ struct State {
 
 impl State {
     fn new(graphics: &mut Graphics2D) -> Self {
-        let text_grid = graphics.new_text_grid(DEFAULT_WIDTH / 80.0, [160, 80]).unwrap();
+        let text_grid = graphics
+            .new_text_grid(DEFAULT_WIDTH / 80.0, [160, 80])
+            .unwrap();
 
-        let mut cursor_batch = SpriteBatch::new(SpriteSheet::from_color(graphics, [1.0, 1.0, 1.0]).unwrap());
+        let mut cursor_batch =
+            SpriteBatch::new(SpriteSheet::from_color(graphics, [1.0, 1.0, 1.0]).unwrap());
         cursor_batch.add(
             Instance::builder()
                 .src([0.0, 0.0, 1.0, 1.0])
@@ -58,17 +64,18 @@ impl State {
 
     fn update(&mut self) {
         if self.start_time.elapsed().as_secs_f32().fract() > 0.5 {
-            self.cursor_batch.get_mut(0).set_color_factor([0.0, 0.0, 0.0]);
+            self.cursor_batch
+                .get_mut(0)
+                .set_color_factor([0.0, 0.0, 0.0]);
         } else {
-            self.cursor_batch.get_mut(0).set_color_factor([1.0, 1.0, 1.0]);
+            self.cursor_batch
+                .get_mut(0)
+                .set_color_factor([1.0, 1.0, 1.0]);
         }
     }
 
     fn batches(&self) -> Vec<&SpriteBatch> {
-        vec![
-            &self.cursor_batch,
-            self.text_grid.batch(),
-        ]
+        vec![&self.cursor_batch, self.text_grid.batch()]
     }
 
     fn set_cursor(&mut self, row_col: [u32; 2]) {
@@ -154,7 +161,10 @@ pub fn main() {
         .unwrap();
 
     let mut graphics = block_on(Graphics2D::from_winit_window(&window)).unwrap();
-    graphics.set_scale(normalized_dims([DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT]));
+    graphics.set_scale(normalized_dims([
+        DEFAULT_DISPLAY_WIDTH,
+        DEFAULT_DISPLAY_HEIGHT,
+    ]));
     let mut state = State::new(&mut graphics);
 
     event_loop.run(move |event, _, control_flow| match event {
@@ -219,14 +229,14 @@ pub fn main() {
                 let width = physical_size.width;
                 let height = physical_size.height;
                 let dim = normalized_dims([width as f32, height as f32]);
-                graphics.resize(*physical_size);
+                graphics.resized(*physical_size);
                 graphics.set_scale(dim);
             }
             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                 let width = new_inner_size.width;
                 let height = new_inner_size.height;
                 let dim = normalized_dims([width as f32, height as f32]);
-                graphics.resize(**new_inner_size);
+                graphics.resized(**new_inner_size);
                 graphics.set_scale(dim);
             }
             _ => {}

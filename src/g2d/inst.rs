@@ -1,5 +1,5 @@
-use crate::Rect;
 use crate::Color;
+use crate::Rect;
 
 /// Instance data.
 /// Data passed to the GPU per sprite in a sprite batch.

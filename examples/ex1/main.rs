@@ -110,10 +110,10 @@ pub fn main() {
                 _ => {}
             },
             WindowEvent::Resized(physical_size) => {
-                state.resize(*physical_size);
+                state.resized(*physical_size);
             }
             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                state.resize(**new_inner_size);
+                state.resized(**new_inner_size);
             }
             _ => {}
         },
