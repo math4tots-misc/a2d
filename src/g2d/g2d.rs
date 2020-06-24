@@ -228,6 +228,11 @@ impl Graphics2D {
         let batches_with_instance_buffers = {
             let mut vec = Vec::new();
             for batch in batches {
+                // wgpu will error if you try to create a buffer of size 0,
+                // so explicitly check for those cases and skip
+                if batch.instances().is_empty() {
+                    continue;
+                }
                 let instance_buffer = self.device.create_buffer_with_data(
                     bytemuck::cast_slice(batch.instances()),
                     wgpu::BufferUsage::VERTEX,
