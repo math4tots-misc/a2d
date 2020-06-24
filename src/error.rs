@@ -8,12 +8,15 @@ pub type Result<T> = std::result::Result<T, A2DError>;
 
 pub struct A2DError {
     message: String,
-    source: Option<Box<dyn Error>>,
+
+    /// TODO: See if I can store the real Error value while keeping this
+    /// compatible with anyhow::Result
+    source: Option<String>,
 }
 
 impl A2DError {
     pub(crate) fn new(message: String, source: Option<Box<dyn Error>>) -> A2DError {
-        A2DError { message, source }
+        A2DError { message, source: source.map(|s| format!("{:?}", s)) }
     }
 }
 
