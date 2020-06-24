@@ -19,7 +19,7 @@ impl TextGrid {
 
     /// The ratio to trim off each of the source rectangles so that the borders
     /// are not included in the draw
-    pub const PADDING_FACTOR: f32 = 0.05;
+    pub const PADDING_FACTOR: [f32; 2] = [0.30, 0.10];
 
     /// loads the Courier sprite sheet embedded with A2D
     pub fn courier_sprite_sheet(graphics: &mut Graphics2D) -> Result<Rc<SpriteSheet>> {
@@ -40,12 +40,13 @@ impl TextGrid {
     /// location if you'd like
     ///
     pub fn new(sheet: Rc<SpriteSheet>, char_width: f32, dim: [u32; 2]) -> Self {
-        let char_height = char_width / Self::CHAR_WIDTH_TO_HEIGHT_RATIO;
+        let [padding_factor_x, padding_factor_y] = Self::PADDING_FACTOR;
+        let char_height = char_width / Self::CHAR_WIDTH_TO_HEIGHT_RATIO / (1.0 - padding_factor_x) * (1.0 - padding_factor_y);
         let mut smap = SpriteMap::new(
             sheet,
             Self::CHAR_MAP_LAYOUT_DIM,
             [char_width, char_height],
-            0.10,
+            Self::PADDING_FACTOR,
         );
         let [nrows, ncols] = dim;
         let empty_cell_index = Self::char_to_cell_index(' ');
@@ -77,18 +78,15 @@ impl TextGrid {
 
     fn char_to_cell_index(c: char) -> u32 {
         // NOTE: assumes that '!' is the first printable character
-        let c = {
-            let c = c as u32;
-            if c < '!' as u32 || c >= 127 {
-                // if it's not printable ASCII, point to the last
-                // cell
-                let [max_r, max_c] = Self::CHAR_MAP_LAYOUT_DIM;
-                max_r * max_c - 1
-            } else {
-                c
-            }
-        };
-        c - '!' as u32
+        let c = c as u32;
+        if c < '!' as u32 || c >= 127 {
+            // if it's not printable ASCII, point to the last
+            // cell
+            let [max_r, max_c] = Self::CHAR_MAP_LAYOUT_DIM;
+            max_r * max_c - 1
+        } else {
+            c - '!' as u32
+        }
     }
 
     /// Returns the number of rows in this TextGrid

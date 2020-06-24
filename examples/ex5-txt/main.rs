@@ -1,6 +1,9 @@
 extern crate a2d;
 use a2d::Graphics2D;
+use a2d::SpriteSheet;
+use a2d::SpriteBatch;
 use a2d::TextGrid;
+use a2d::Instance;
 use futures::executor::block_on;
 use winit::{
     dpi::LogicalSize,
@@ -28,14 +31,21 @@ pub fn main() {
 
     let mut state = block_on(Graphics2D::from_winit_window(&window)).unwrap();
     state.set_scale([WIDTH, HEIGHT]);
+    let bg_sheet = SpriteSheet::from_color(&mut state, [1.0, 1.0, 1.0]).unwrap();
+    let mut bg_batch = SpriteBatch::new(bg_sheet);
+    bg_batch.add(Instance::new(
+        [0.0, 0.0, 1.0, 1.0],
+        [0.0, 0.0, WIDTH, HEIGHT],
+        0.0,
+    ));
     let char_sheet = TextGrid::courier_sprite_sheet(&mut state).unwrap();
-    let mut tgrid = TextGrid::new(char_sheet, WIDTH / 40.0, [15, 10]);
+    let mut tgrid = TextGrid::new(char_sheet, WIDTH / 80.0, [20, 10]);
 
     tgrid.write(0, 0, "Hello world!");
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::RedrawRequested(_) => {
-            state.render(&[tgrid.batch()]);
+            state.render(&[&bg_batch, tgrid.batch()]);
             std::thread::yield_now();
         }
         Event::MainEventsCleared => {

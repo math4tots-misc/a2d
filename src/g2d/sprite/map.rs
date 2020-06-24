@@ -24,7 +24,7 @@ pub struct SpriteMap {
     /// The amount to trim border by as a factor between 0 and 1, with
     /// 1 trimming everything down to a point, and 0 trimming nothing
     /// around the border
-    border_trim_factor: f32,
+    border_trim_factor: [f32; 2],
 }
 
 impl SpriteMap {
@@ -32,13 +32,14 @@ impl SpriteMap {
         sheet: Rc<SpriteSheet>,
         dimensions: D,
         default_dst_dim: DD,
-        border_trim_factor: f32,
+        border_trim_factor: [f32; 2],
     ) -> Self
     where
         D: Into<SpriteMapDimensions>,
         DD: Into<Dimensions>,
     {
-        assert!(0.0 <= border_trim_factor && border_trim_factor <= 1.0);
+        assert!(0.0 <= border_trim_factor[0] && border_trim_factor[0] <= 1.0);
+        assert!(0.0 <= border_trim_factor[1] && border_trim_factor[1] <= 1.0);
         let batch = SpriteBatch::new(sheet);
         Self {
             batch,
@@ -139,15 +140,16 @@ impl SpriteMapDimensions {
     }
 
     /// Returns the rect
-    fn rect_for_cell(&self, cell_index: u32, border_trim_factor: f32) -> Rect {
+    fn rect_for_cell(&self, cell_index: u32, border_trim_factor: [f32; 2]) -> Rect {
+        let [trim_factor_x, trim_factor_y] = border_trim_factor;
         let [row, col] = self.cell_coord(cell_index);
         let cell_width = self.cell_width();
         let cell_height = self.cell_height();
-        let ul_x = cell_width * (col as f32 + border_trim_factor / 2.0);
-        let ul_y = cell_height * (row as f32 + border_trim_factor / 2.0);
+        let ul_x = cell_width * (col as f32 + trim_factor_x / 2.0);
+        let ul_y = cell_height * (row as f32 + trim_factor_y / 2.0);
 
-        let lr_x = ul_x + cell_width * (1.0 - border_trim_factor);
-        let lr_y = ul_y + cell_height * (1.0 - border_trim_factor);
+        let lr_x = ul_x + cell_width * (1.0 - trim_factor_x);
+        let lr_y = ul_y + cell_height * (1.0 - trim_factor_y);
         [ul_x, ul_y, lr_x, lr_y].into()
     }
 
