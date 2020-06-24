@@ -46,12 +46,12 @@ impl SpriteBatch {
         self.instances.len()
     }
 
-    pub fn set(&mut self, i: usize, inst: Instance) {
-        self.instances[i] = inst
+    pub fn set<I: Into<Instance>>(&mut self, i: usize, inst: I) {
+        self.instances[i] = inst.into()
     }
 
-    pub fn add(&mut self, inst: Instance) {
-        self.instances.push(inst);
+    pub fn add<I: Into<Instance>>(&mut self, inst: I) {
+        self.instances.push(inst.into());
     }
 
     pub fn last(&self) -> Option<&Instance> {

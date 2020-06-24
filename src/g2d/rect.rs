@@ -27,16 +27,6 @@ impl Rect {
         }
     }
 
-    /// allows constructing rectangles in a const context
-    /// it's unsafe, because currently it's not possible to do a
-    /// check on the input values in a const fn
-    pub const unsafe fn const_new(x1: f32, y1: f32, x2: f32, y2: f32) -> Rect {
-        Rect {
-            upper_left: [x1, y1],
-            lower_right: [x2, y2],
-        }
-    }
-
     pub const fn upper_left(&self) -> [f32; 2] {
         self.upper_left
     }

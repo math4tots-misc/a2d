@@ -7,6 +7,6 @@ pub use g2d::Graphics2D;
 pub use inst::Instance;
 pub use rect::Rect;
 pub use sprite::SpriteBatch;
-pub use sprite::SpriteMap;
+pub(crate) use sprite::SpriteMap;
 pub use sprite::SpriteMapDimensions;
 pub use sprite::SpriteSheet;

@@ -57,11 +57,12 @@ pub fn main() {
         for c in 0..SIZE {
             let ox = c as f32 * (1.0 / SIZE as f32);
             if is_prime(r + c) {
-                batch.add(Instance::new(
-                    [0.0, 0.0, 1.0, 1.0],
-                    [ox, oy, ox + len, oy + len],
-                    3.14 / 2.0,
-                ));
+                batch.add(
+                    Instance::builder()
+                        .src([0.0, 0.0, 1.0, 1.0])
+                        .dest([ox, oy, ox + len, oy + len])
+                        .rotate(3.14 / 2.0),
+                );
             }
         }
     }

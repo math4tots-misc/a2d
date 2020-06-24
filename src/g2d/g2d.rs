@@ -3,6 +3,9 @@ use crate::Instance;
 use crate::Result;
 use crate::Scaling;
 use crate::SpriteBatch;
+use crate::SpriteSheet;
+use crate::TextGrid;
+use std::rc::Rc;
 
 pub struct Graphics2D {
     surface: wgpu::Surface,
@@ -19,6 +22,8 @@ pub struct Graphics2D {
 
     scale: Scaling,
     scale_uniform_buffer: wgpu::Buffer,
+
+    courier_sprite_sheet: Option<Rc<SpriteSheet>>,
 }
 
 impl Graphics2D {
@@ -169,7 +174,22 @@ impl Graphics2D {
             texture_bind_group_layout,
             scale,
             scale_uniform_buffer,
+            courier_sprite_sheet: None,
         })
+    }
+
+    fn courier_sprite_sheet(&mut self) -> Result<Rc<SpriteSheet>> {
+        if self.courier_sprite_sheet.is_none() {
+            self.courier_sprite_sheet = Some(TextGrid::courier_sprite_sheet(self)?);
+        }
+        Ok(self.courier_sprite_sheet.as_ref().unwrap().clone())
+    }
+
+    /// Creates a new TextGrid instance with the builtin courier font
+    /// given the width of a character block and [num_rows, num_cols]
+    pub fn new_text_grid(&mut self, char_width: f32, dim: [u32; 2]) -> Result<TextGrid> {
+        let sheet = self.courier_sprite_sheet()?;
+        Ok(TextGrid::new(sheet, char_width, dim))
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
@@ -263,10 +283,10 @@ impl Graphics2D {
                     load_op: wgpu::LoadOp::Clear,
                     store_op: wgpu::StoreOp::Store,
                     clear_color: wgpu::Color {
-                        r: 0.1,
-                        g: 0.2,
-                        b: 0.3,
-                        a: 1.0,
+                        r: 0.0,
+                        g: 0.0,
+                        b: 0.0,
+                        a: 0.0,
                     },
                 }],
                 depth_stencil_attachment: None,

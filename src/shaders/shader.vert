@@ -6,8 +6,10 @@ layout(location=1) in vec2 src_lr;
 layout(location=2) in vec2 dst_ul;
 layout(location=3) in vec2 dst_lr;
 layout(location=4) in float rotate_theta;
+layout(location=5) in vec4 color_factor;
 
 layout(location=0) out vec2 v_tex_coords;
+layout(location=1) out vec4 v_color_factor;
 
 layout(set = 1, binding = 0) uniform Uniform {
     vec2 u_scale;
@@ -61,6 +63,10 @@ const mat3 normalized_basis = mat3(
 );
 
 void main() {
+    // Just pass color_factor to fragment shader; there isn't any
+    // processing to be done for it in the vertex shader
+    v_color_factor = color_factor;
+
     // ---------------
     // Define some useful matrices for the
     // requested transformation

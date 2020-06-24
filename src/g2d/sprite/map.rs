@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::Dimensions;
 use crate::Instance;
 use crate::Point;
@@ -9,7 +10,11 @@ use std::rc::Rc;
 
 /// A SpriteMap wraps a SpriteBatch assuming that the underlying
 /// sheet is made up of equal sized rectangles
-pub struct SpriteMap {
+///
+/// While eventually I'd like to make something like this public,
+/// for now, I'll keep this a utility private to this create
+/// until it feels more stable
+pub(crate) struct SpriteMap {
     batch: SpriteBatch,
 
     /// The [num_rows, num_cols] describing how the sprite sheet is divided
@@ -72,9 +77,12 @@ impl SpriteMap {
     /// Sets the sprite at instance index i to use the sprite cell indicated by the given cell_index
     pub fn set_cell(&mut self, instance_index: usize, cell_index: u32) {
         let src_rect = self.rect_for_cell(cell_index);
-        self.batch
-            .get_mut(instance_index)
-            .set_src(src_rect);
+        self.batch.get_mut(instance_index).set_src(src_rect);
+    }
+
+    /// Gets the underlying Instance, so that you can e.g. set the color
+    pub fn get_mut(&mut self, instance_index: usize) -> &mut Instance {
+        self.batch.get_mut(instance_index)
     }
 
     /// Adds a new instance using the image from the cell_index to a rectangle
@@ -83,11 +91,18 @@ impl SpriteMap {
         let center = center.into();
         let src_rect = self.rect_for_cell(cell_index);
         let dst_rect = self.dst_rect(center);
-        self.batch.add(Instance::new(src_rect, dst_rect, 0.0));
+        self.batch.add(
+            Instance::builder()
+                .src(src_rect)
+                .dest(dst_rect)
+                .rotate(0.0)
+                .build(),
+        );
     }
 
-    fn rect_for_cell(&self, cell_index: u32) -> Rect {
-        self.dimensions.rect_for_cell(cell_index, self.border_trim_factor)
+    pub fn rect_for_cell(&self, cell_index: u32) -> Rect {
+        self.dimensions
+            .rect_for_cell(cell_index, self.border_trim_factor)
     }
 
     fn dst_rect(&self, center: Point) -> Rect {

@@ -33,38 +33,44 @@ pub fn main() {
     let sheet = SpriteSheet::from_color(&mut state, [1.0, 0.5, 0.5]).unwrap();
     let mut batch1 = SpriteBatch::new(sheet);
     batch1.set_translation([0.5, 0.0]);
-    batch1.add(Instance::new(
-        [0.0, 0.0, 1.0, 1.0],
-        [0.25, 0.25, 0.75, 0.75],
-        3.14 / 3.0,
-    ));
-    batch1.add(Instance::new(
-        [0.0, 0.0, 1.0, 1.0],
-        [0.0, 0.0, 0.25, 0.25],
-        0.0,
-    ));
-    batch1.add(Instance::new(
-        [0.0, 0.0, 1.0, 1.0],
-        [0.5, 0.5, 1.0, 1.0],
-        0.0,
-    ));
-    batch1.add(Instance::new(
-        [0.0, 0.0, 1.0, 1.0],
-        [0.5, 0.5, 1.0, 1.0],
-        0.0,
-    ));
-    batch1.add(Instance::new(
-        [0.0, 0.0, 1.0, 1.0],
-        [-0.1, 0.0, 0.1, 0.1],
-        0.0,
-    ));
+    batch1.add(
+        Instance::builder()
+            .src([0.0, 0.0, 1.0, 1.0])
+            .dest([0.25, 0.25, 0.75, 0.75])
+            .rotate(3.14 / 3.0),
+    );
+    batch1.add(
+        Instance::builder()
+            .src([0.0, 0.0, 1.0, 1.0])
+            .dest([0.0, 0.0, 0.25, 0.25])
+            .rotate(0.0),
+    );
+    batch1.add(
+        Instance::builder()
+            .src([0.0, 0.0, 1.0, 1.0])
+            .dest([0.5, 0.5, 1.0, 1.0])
+            .rotate(0.0),
+    );
+    batch1.add(
+        Instance::builder()
+            .src([0.0, 0.0, 1.0, 1.0])
+            .dest([0.5, 0.5, 1.0, 1.0])
+            .rotate(0.0),
+    );
+    batch1.add(
+        Instance::builder()
+            .src([0.0, 0.0, 1.0, 1.0])
+            .dest([-0.1, 0.0, 0.1, 0.1])
+            .rotate(0.0),
+    );
     let mut batch2 =
         SpriteBatch::new(SpriteSheet::from_color(&mut state, [0.5, 0.5, 0.1]).unwrap());
-    batch2.add(Instance::new(
-        [0.0, 0.0, 1.0, 1.0],
-        [0.5, 0.0, WIDTH, HEIGHT / 2.0],
-        0.2,
-    ));
+    batch2.add(
+        Instance::builder()
+            .src([0.0, 0.0, 1.0, 1.0])
+            .dest([0.5, 0.0, WIDTH, HEIGHT / 2.0])
+            .rotate(0.2),
+    );
 
     let start = std::time::SystemTime::now();
 

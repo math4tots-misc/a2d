@@ -26,31 +26,41 @@ pub fn main() {
     state.set_scale([1200.0 / 800.0, 1.0]);
     let sheet = SpriteSheet::from_bytes(&mut state, include_bytes!("happy-tree.png")).unwrap();
     let mut batch = SpriteBatch::new(sheet);
-    batch.add(Instance::new(
-        [0.0, 0.0, 0.75, 0.75],
-        [0.25, 0.25, 0.75, 0.75],
-        3.14 / 3.0,
-    ));
-    batch.add(Instance::new(
-        [0.0, 0.0, 0.5, 0.5],
-        [0.0, 0.0, 0.25, 0.25],
-        0.0,
-    ));
-    batch.add(Instance::new(
-        [0.75, 0.75, 1.0, 1.0],
-        [0.5, 0.5, 1.0, 1.0],
-        0.0,
-    ));
-    batch.add(Instance::new(
-        [0.0, 0.75, 0.2, 1.0],
-        [0.5, 0.5, 1.0, 1.0],
-        0.0,
-    ));
-    batch.add(Instance::new(
-        [0.0, 0.75, 0.2, 1.0],
-        [-0.1, 0.0, 0.1, 0.1],
-        0.0,
-    ));
+    batch.add(
+        Instance::builder()
+            .src([0.0, 0.0, 0.75, 0.75])
+            .dest([0.25, 0.25, 0.75, 0.75])
+            .rotate(3.14 / 3.0)
+            .build(),
+    );
+    batch.add(
+        Instance::builder()
+            .src([0.0, 0.0, 0.5, 0.5])
+            .dest([0.0, 0.0, 0.25, 0.25])
+            .rotate(0.0)
+            .build(),
+    );
+    batch.add(
+        Instance::builder()
+            .src([0.75, 0.75, 1.0, 1.0])
+            .dest([0.5, 0.5, 1.0, 1.0])
+            .rotate(0.0)
+            .build(),
+    );
+    batch.add(
+        Instance::builder()
+            .src([0.0, 0.75, 0.2, 1.0])
+            .dest([0.5, 0.5, 1.0, 1.0])
+            .rotate(0.0)
+            .build(),
+    );
+    batch.add(
+        Instance::builder()
+            .src([0.0, 0.75, 0.2, 1.0])
+            .dest([-0.1, 0.0, 0.1, 0.1])
+            .rotate(0.0)
+            .build(),
+    );
 
     let start = std::time::SystemTime::now();
 
