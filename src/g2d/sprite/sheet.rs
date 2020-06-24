@@ -27,18 +27,18 @@ impl SpriteSheet {
         state: &mut Graphics2D,
         width: u32,
         height: u32,
-        colors: Vec<C>,
+        colors: V,
     ) -> Result<Rc<Self>>
     where
         C: Into<Color>,
         V: IntoIterator<Item = C>,
     {
-        assert_eq!(width * height, colors.len() as u32);
         let mut pixels = Vec::new();
         for color in colors {
             let color = color.into();
             pixels.extend(&color.to_u8_array())
         }
+        assert_eq!((width * height * 4) as usize, pixels.len());
         Self::from_rgba_bytes(state, width, height, pixels)
     }
 

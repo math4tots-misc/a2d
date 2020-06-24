@@ -16,7 +16,10 @@ pub struct A2DError {
 
 impl A2DError {
     pub(crate) fn new(message: String, source: Option<Box<dyn Error>>) -> A2DError {
-        A2DError { message, source: source.map(|s| format!("{:?}", s)) }
+        A2DError {
+            message,
+            source: source.map(|s| format!("{:?}", s)),
+        }
     }
 }
 
