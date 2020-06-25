@@ -100,15 +100,25 @@ impl TextGrid {
     /// Writes the given string to this grid starting at the given row and column
     /// This method will not wrap the string
     pub fn write_str(&mut self, coord: [u32; 2], s: &str) {
-        let [row, mut col] = coord;
-        let ncols = self.ncols();
+        let [mut row, mut col] = coord;
+        let [nrows, ncols] = self.dimensions();
         let mut chars = s.chars();
         while let Some(ch) = chars.next() {
-            if col >= ncols {
+            if row >= nrows {
                 break;
             }
-            self.write_ch([row, col], ch);
-            col += 1;
+            if col < ncols {
+                self.write_ch([row, col], ch);
+            }
+            match ch {
+                '\n' => {
+                    row += 1;
+                    col = 0;
+                }
+                _ => {
+                    col += 1;
+                }
+            }
         }
     }
 
