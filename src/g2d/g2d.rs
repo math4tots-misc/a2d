@@ -178,7 +178,7 @@ impl Graphics2D {
         })
     }
 
-    fn courier_sprite_sheet(&mut self) -> Result<Rc<SpriteSheet>> {
+    pub fn courier_sprite_sheet(&mut self) -> Result<Rc<SpriteSheet>> {
         if self.courier_sprite_sheet.is_none() {
             self.courier_sprite_sheet = Some(TextGrid::courier_sprite_sheet(self)?);
         }
