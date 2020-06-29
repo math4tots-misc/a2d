@@ -5,6 +5,7 @@ use crate::Result;
 use crate::SpriteBatch;
 use crate::SpriteMap;
 use crate::SpriteSheet;
+use crate::Translation;
 use std::rc::Rc;
 
 /// Convenience struct for drawing text on the screen.
@@ -165,5 +166,13 @@ impl TextGrid {
     /// Get the underlying SpriteBatch associated with this TextGrid
     pub fn batch(&self) -> &SpriteBatch {
         self.smap.batch()
+    }
+
+    pub fn set_translation(&mut self, translation: Translation) {
+        self.smap.set_translation(translation);
+    }
+
+    pub fn translation(&self) -> Translation {
+        self.smap.translation()
     }
 }
