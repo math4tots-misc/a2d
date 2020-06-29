@@ -141,6 +141,12 @@ impl TextGrid {
         self.smap.get_mut(instance_index).set_color_factor(color);
     }
 
+    pub fn set_color<C: Into<Color>>(&mut self, coord: [u32; 2], color: C) {
+        let [row, col] = coord;
+        let instance_index = self.coordinates_to_instance_index([row, col]);
+        self.smap.get_mut(instance_index).set_color_factor(color);
+    }
+
     fn char_to_cell_index(c: char) -> u32 {
         // NOTE: assumes that '!' is the first printable character
         let c = c as u32;
