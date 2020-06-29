@@ -6,6 +6,7 @@ use crate::SpriteBatch;
 use crate::SpriteMap;
 use crate::SpriteSheet;
 use crate::Translation;
+use crate::Color;
 use std::rc::Rc;
 
 /// Convenience struct for drawing text on the screen.
@@ -98,9 +99,14 @@ impl TextGrid {
         [x, y, x + char_width, y + char_height].into()
     }
 
+    pub fn write_str(&mut self, coord: [u32; 2], s: &str) {
+        self.write_color_str(coord, s, [1.0, 1.0, 1.0, 1.0])
+    }
+
     /// Writes the given string to this grid starting at the given row and column
     /// This method will not wrap the string
-    pub fn write_str(&mut self, coord: [u32; 2], s: &str) {
+    pub fn write_color_str<C: Into<Color>>(&mut self, coord: [u32; 2], s: &str, color: C) {
+        let color = color.into();
         let [mut row, mut col] = coord;
         let [nrows, ncols] = self.dimensions();
         let mut chars = s.chars();
@@ -109,7 +115,7 @@ impl TextGrid {
                 break;
             }
             if col < ncols {
-                self.write_ch([row, col], ch);
+                self.write_color_ch([row, col], ch, color);
             }
             match ch {
                 '\n' => {
@@ -124,10 +130,15 @@ impl TextGrid {
     }
 
     pub fn write_ch(&mut self, coord: [u32; 2], ch: char) {
+        self.write_color_ch(coord, ch, [1.0, 1.0, 1.0, 1.0])
+    }
+
+    pub fn write_color_ch<C: Into<Color>>(&mut self, coord: [u32; 2], ch: char, color: C) {
         let [row, col] = coord;
         let instance_index = self.coordinates_to_instance_index([row, col]);
         let cell_index = Self::char_to_cell_index(ch);
         self.smap.set_cell(instance_index, cell_index);
+        self.smap.get_mut(instance_index).set_color_factor(color);
     }
 
     fn char_to_cell_index(c: char) -> u32 {
