@@ -16,7 +16,8 @@ layout(set = 1, binding = 0) uniform Uniform {
 };
 
 layout(set = 2, binding = 0) uniform TranslationUniform {
-    vec2 u_translate;
+    vec2 u_per_batch_scale;
+    vec2 u_per_batch_translate;
 };
 
 const vec2 positions[4] = vec2[4](
@@ -109,7 +110,10 @@ void main() {
     vec3 src_pos3 = normalized_to_src * normalized_pos3;
     vec3 dst_pos3 = normalized_to_dst * normalized_pos3;
     vec3 rot_pos3 = rotate_around_dst_center * dst_pos3;
-    vec3 translated_pos3 = rot_pos3 + vec3(u_translate, 0.0);
+    vec3 translated_pos3 = vec3(
+        vec2(rot_pos3) * u_per_batch_scale + u_per_batch_translate,
+        1.0
+    );
 
     v_tex_coords = vec2(src_pos3);
     gl_Position = vec4(

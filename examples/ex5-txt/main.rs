@@ -31,11 +31,12 @@ struct State {
     cursor_batch: SpriteBatch,
     text_grid: TextGrid,
     coord: [u32; 2],
+    log_scale: i32,
 }
 
 impl State {
     fn new(graphics: &mut Graphics2D) -> Self {
-        let text_grid = graphics
+        let mut text_grid = graphics
             .new_text_grid(DEFAULT_WIDTH / 80.0, [160, 80])
             .unwrap();
 
@@ -48,6 +49,9 @@ impl State {
                 .rotate(0.0),
         );
 
+        text_grid.set_translation([0.2, 0.1]);
+        // cursor_batch.set_translation([0.2, 0.1]);
+
         let coord = [0, 0];
 
         let mut state = Self {
@@ -55,11 +59,27 @@ impl State {
             cursor_batch,
             text_grid,
             coord,
+            log_scale: 0,
         };
 
         state.set_cursor(coord);
 
         state
+    }
+
+    fn increase_scale(&mut self) {
+        self.set_log_scale(self.log_scale + 1);
+    }
+
+    fn decrease_scale(&mut self) {
+        self.set_log_scale(self.log_scale - 1);
+    }
+
+    fn set_log_scale(&mut self, new_log_scale: i32) {
+        self.log_scale = new_log_scale;
+        let factor = (1.1f32).powi(new_log_scale);
+        self.text_grid.set_scale([factor, factor]);
+        self.set_cursor(self.coord);
     }
 
     fn update(&mut self) {
@@ -166,6 +186,7 @@ pub fn main() {
         DEFAULT_DISPLAY_HEIGHT,
     ]));
     let mut state = State::new(&mut graphics);
+    let mut lwin = false;
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::RedrawRequested(_) => {
@@ -190,21 +211,31 @@ pub fn main() {
                     *control_flow = ControlFlow::Exit;
                 }
                 KeyboardInput {
+                    state,
+                    virtual_keycode: Some(VirtualKeyCode::LWin),
+                    ..
+                } => {
+                    match state {
+                        ElementState::Pressed => {
+                            println!("lwin = true");
+                            lwin = true;
+                        }
+                        ElementState::Released => {
+                            println!("lwin = false");
+                            lwin = false;
+                        }
+                    }
+                }
+                KeyboardInput {
                     state: ElementState::Pressed,
                     virtual_keycode: Some(code),
                     ..
                 } => match code {
                     VirtualKeyCode::Up => {
                         state.move_up();
-                        // let scale = graphics.scale();
-                        // let scale = [scale[0] * 2.0, scale[1] * 2.0];
-                        // graphics.set_scale(scale);
                     }
                     VirtualKeyCode::Down => {
                         state.move_down();
-                        // let scale = graphics.scale();
-                        // let scale = [scale[0] / 2.0, scale[1] / 2.0];
-                        // graphics.set_scale(scale);
                     }
                     VirtualKeyCode::Right => {
                         state.incr();
@@ -221,7 +252,11 @@ pub fn main() {
             },
             WindowEvent::ReceivedCharacter(ch) => {
                 println!("char = {}", ch);
-                if ch.is_ascii() && !ch.is_ascii_control() {
+                if lwin && *ch == '-' {
+                    state.decrease_scale();
+                } else if lwin && *ch == '='  {
+                    state.increase_scale();
+                } else if ch.is_ascii() && !ch.is_ascii_control() {
                     state.put_ch(*ch);
                 }
             }

@@ -6,6 +6,7 @@ use crate::SpriteBatch;
 use crate::SpriteMap;
 use crate::SpriteSheet;
 use crate::Translation;
+use crate::Scaling;
 use crate::Color;
 use std::rc::Rc;
 
@@ -16,19 +17,26 @@ use std::rc::Rc;
 pub struct TextGrid {
     smap: SpriteMap,
     dim: [u32; 2],
-    char_dim: Dimensions,
+    raw_char_dim: Dimensions,
 }
 
 impl TextGrid {
     /// The layout of how the characters should be laid out in the sprite-sheet
     const CHAR_MAP_LAYOUT_DIM: [u32; 2] = [3, 32];
 
-    /// The width to height ratio of each drawn character rectangle
-    pub const CHAR_WIDTH_TO_HEIGHT_RATIO: f32 = 3.0 / 4.0;
+    /// The width to height ratio of each drawn character
+    /// NOTE: this isn't the same as the actual ratio of the rectangel for
+    /// each drawn character.
+    /// For that, see CELL_WIDTH_TO_HEIGHT_RATIO
+    const CHAR_WIDTH_TO_HEIGHT_RATIO: f32 = 3.0 / 4.0;
 
     /// The ratio to trim off each of the source rectangles so that the borders
     /// are not included in the draw
     pub const PADDING_FACTOR: [f32; 2] = [0.30, 0.10];
+
+    /// The actual width to height ratio of each character cell
+    pub const CELL_WIDTH_TO_HEIGHT_RATIO: f32 =
+        Self::CHAR_WIDTH_TO_HEIGHT_RATIO * (1.0 - Self::PADDING_FACTOR[0]) / (1.0 - Self::PADDING_FACTOR[1]);
 
     /// loads the Courier sprite sheet embedded with A2D
     pub(crate) fn courier_sprite_sheet(graphics: &mut Graphics2D) -> Result<Rc<SpriteSheet>> {
@@ -49,9 +57,7 @@ impl TextGrid {
     /// location if you'd like
     ///
     pub(crate) fn new(sheet: Rc<SpriteSheet>, char_width: f32, dim: [u32; 2]) -> Self {
-        let [padding_factor_x, padding_factor_y] = Self::PADDING_FACTOR;
-        let char_height = char_width / Self::CHAR_WIDTH_TO_HEIGHT_RATIO / (1.0 - padding_factor_x)
-            * (1.0 - padding_factor_y);
+        let char_height = char_width / Self::CELL_WIDTH_TO_HEIGHT_RATIO;
         let mut smap = SpriteMap::new(
             sheet,
             Self::CHAR_MAP_LAYOUT_DIM,
@@ -70,33 +76,38 @@ impl TextGrid {
         Self {
             smap,
             dim,
-            char_dim: [char_width, char_height].into(),
+            raw_char_dim: [char_width, char_height].into(),
         }
     }
 
     /// The width of a single character cell
     pub fn char_width(&self) -> f32 {
-        self.char_dim.width
+        self.char_dim().width
     }
 
     /// The height of a single character cell
     pub fn char_height(&self) -> f32 {
-        self.char_dim.height
+        self.char_dim().height
     }
 
     pub fn char_dim(&self) -> Dimensions {
-        self.char_dim
+        self.raw_char_dim * self.scale()
     }
 
     /// Gives the rectangle coordinates of where the character at given row and column
     /// is drawn
     pub fn rect_for_coord(&self, row_col: [u32; 2]) -> Rect {
         let [row, col] = row_col;
-        let [char_width, char_height] = self.char_dim.to_array();
+        let [char_width, char_height] = self.char_dim().to_array();
         let [offset_x, offset_y] = self.smap.translation();
         let x = char_width * col as f32 + offset_x;
         let y = char_height * row as f32 + offset_y;
-        [x, y, x + char_width, y + char_height].into()
+        [
+            x,
+            y,
+            x + char_width,
+            y + char_height,
+        ].into()
     }
 
     pub fn write_str(&mut self, coord: [u32; 2], s: &str) {
@@ -191,5 +202,13 @@ impl TextGrid {
 
     pub fn translation(&self) -> Translation {
         self.smap.translation()
+    }
+
+    pub fn set_scale(&mut self, scale: Scaling) {
+        self.smap.set_scale(scale);
+    }
+
+    pub fn scale(&self) -> Scaling {
+        self.smap.scale()
     }
 }

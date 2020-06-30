@@ -6,6 +6,7 @@ use crate::Rect;
 use crate::SpriteBatch;
 use crate::SpriteSheet;
 use crate::Translation;
+use crate::Scaling;
 use std::rc::Rc;
 
 /// A SpriteMap wraps a SpriteBatch assuming that the underlying
@@ -85,6 +86,10 @@ impl SpriteMap {
         self.batch.get_mut(instance_index)
     }
 
+    pub fn get(&self, instance_index: usize) -> &Instance {
+        self.batch.get(instance_index)
+    }
+
     /// Adds a new instance using the image from the cell_index to a rectangle
     /// located at the given center
     pub fn add<P: Into<Point>>(&mut self, center: P, cell_index: u32) {
@@ -115,16 +120,24 @@ impl SpriteMap {
         self.batch.get_mut(instance_index).set_dest(new_dst_rect);
     }
 
-    pub fn translation(&self) -> Translation {
-        self.batch.translation()
-    }
-
     pub fn batch(&self) -> &SpriteBatch {
         &self.batch
     }
 
+    pub fn translation(&self) -> Translation {
+        self.batch.translation()
+    }
+
     pub fn set_translation(&mut self, translation: Translation) {
         self.batch.set_translation(translation)
+    }
+
+    pub fn scale(&self) -> Scaling {
+        self.batch.scale()
+    }
+
+    pub fn set_scale(&mut self, scale: Scaling) {
+        self.batch.set_scale(scale)
     }
 
     pub fn cell_width(&self) -> f32 {

@@ -2,6 +2,7 @@ use crate::shaders;
 use crate::Instance;
 use crate::Result;
 use crate::Scaling;
+use crate::Translation;
 use crate::SpriteBatch;
 use crate::SpriteSheet;
 use crate::TextGrid;
@@ -238,7 +239,10 @@ impl Graphics2D {
                     wgpu::BufferUsage::VERTEX,
                 );
                 let translation_buffer = self.device.create_buffer_with_data(
-                    bytemuck::cast_slice(&batch.translation()),
+                    bytemuck::cast_slice(&[
+                        batch.scale(),
+                        batch.translation(),
+                    ]),
                     wgpu::BufferUsage::UNIFORM,
                 );
                 let translation_bind_group =
@@ -248,7 +252,10 @@ impl Graphics2D {
                             binding: 0,
                             resource: wgpu::BindingResource::Buffer {
                                 buffer: &translation_buffer,
-                                range: 0..std::mem::size_of::<Scaling>() as wgpu::BufferAddress,
+                                range: 0..(
+                                    std::mem::size_of::<Scaling>() +
+                                    std::mem::size_of::<Translation>()
+                                ) as wgpu::BufferAddress,
                             },
                         }],
                         label: Some("per_batch_scale_uniform_bind_group"),
