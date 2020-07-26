@@ -1,12 +1,71 @@
 use crate::shaders;
+use crate::A2DError;
 use crate::Instance;
 use crate::Result;
 use crate::Scaling;
-use crate::Translation;
 use crate::SpriteBatch;
 use crate::SpriteSheet;
 use crate::TextGrid;
+use crate::Translation;
+use std::convert::TryFrom;
+use std::convert::TryInto;
 use std::rc::Rc;
+
+const SHEET_LIMIT: usize = 16;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SpriteSheetId(u16);
+
+impl SpriteSheetId {
+    pub fn new(id: u16) -> Result<Self> {
+        if id as usize >= SHEET_LIMIT {
+            Err(A2DError::new(
+                format!("Invalid SpriteSheetId ({})", id),
+                None,
+            ))
+        } else {
+            Ok(Self(id))
+        }
+    }
+    pub fn get(&self) -> u16 {
+        self.0
+    }
+}
+
+impl TryFrom<u16> for SpriteSheetId {
+    type Error = A2DError;
+
+    fn try_from(id: u16) -> Result<Self> {
+        Self::new(id)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SpriteBatchId(u16);
+
+impl SpriteBatchId {
+    pub fn new(id: u16) -> Result<Self> {
+        if id as usize >= SHEET_LIMIT {
+            Err(A2DError::new(
+                format!("Invalid SpriteBatchId ({})", id),
+                None,
+            ))
+        } else {
+            Ok(Self(id))
+        }
+    }
+    pub fn get(&self) -> u16 {
+        self.0
+    }
+}
+
+impl TryFrom<u16> for SpriteBatchId {
+    type Error = A2DError;
+
+    fn try_from(id: u16) -> Result<Self> {
+        Self::new(id)
+    }
+}
 
 pub struct Graphics2D {
     surface: wgpu::Surface,
@@ -25,11 +84,16 @@ pub struct Graphics2D {
     scale_uniform_buffer: wgpu::Buffer,
 
     courier_sprite_sheet: Option<Rc<SpriteSheet>>,
+    sheets: [Option<Rc<SpriteSheet>>; SHEET_LIMIT],
+    batches: [Option<SpriteBatch>; SHEET_LIMIT],
 }
 
 impl Graphics2D {
-    pub async fn from_winit_window(window: &winit::window::Window) -> Result<Self> {
-        let size = window.inner_size();
+    pub async fn new<W: raw_window_handle::HasRawWindowHandle>(
+        width: u32,
+        height: u32,
+        window: &W,
+    ) -> Result<Self> {
         let surface = wgpu::Surface::create(window);
         let adapter = match wgpu::Adapter::request(
             &wgpu::RequestAdapterOptions {
@@ -55,8 +119,8 @@ impl Graphics2D {
         let sc_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
             format: wgpu::TextureFormat::Bgra8UnormSrgb,
-            width: size.width,
-            height: size.height,
+            width: width,
+            height: height,
             present_mode: wgpu::PresentMode::Fifo,
         };
         let swap_chain = device.create_swap_chain(&surface, &sc_desc);
@@ -176,10 +240,12 @@ impl Graphics2D {
             scale,
             scale_uniform_buffer,
             courier_sprite_sheet: None,
+            sheets: Default::default(),
+            batches: Default::default(),
         })
     }
 
-    pub fn courier_sprite_sheet(&mut self) -> Result<Rc<SpriteSheet>> {
+    fn courier_sprite_sheet(&mut self) -> Result<Rc<SpriteSheet>> {
         if self.courier_sprite_sheet.is_none() {
             self.courier_sprite_sheet = Some(TextGrid::courier_sprite_sheet(self)?);
         }
@@ -194,9 +260,9 @@ impl Graphics2D {
     }
 
     /// Call this method to notify A2D that the window has been resized
-    pub fn resized(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        self.sc_desc.width = new_size.width;
-        self.sc_desc.height = new_size.height;
+    pub fn resized(&mut self, width: u32, height: u32) {
+        self.sc_desc.width = width;
+        self.sc_desc.height = height;
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
     }
 
@@ -220,7 +286,7 @@ impl Graphics2D {
         );
     }
 
-    pub fn render(&mut self, batches: &[&SpriteBatch]) {
+    pub fn render(&mut self) {
         struct BatchInfo<'a> {
             batch: &'a SpriteBatch,
             instance_buffer: wgpu::Buffer,
@@ -228,7 +294,7 @@ impl Graphics2D {
         }
         let batches_with_instance_buffers = {
             let mut vec = Vec::new();
-            for batch in batches {
+            for batch in self.batches.iter().flatten() {
                 // wgpu will error if you try to create a buffer of size 0,
                 // so explicitly check for those cases and skip
                 if batch.instances().is_empty() {
@@ -239,10 +305,7 @@ impl Graphics2D {
                     wgpu::BufferUsage::VERTEX,
                 );
                 let translation_buffer = self.device.create_buffer_with_data(
-                    bytemuck::cast_slice(&[
-                        batch.scale(),
-                        batch.translation(),
-                    ]),
+                    bytemuck::cast_slice(&[batch.scale(), batch.translation()]),
                     wgpu::BufferUsage::UNIFORM,
                 );
                 let translation_bind_group =
@@ -252,10 +315,9 @@ impl Graphics2D {
                             binding: 0,
                             resource: wgpu::BindingResource::Buffer {
                                 buffer: &translation_buffer,
-                                range: 0..(
-                                    std::mem::size_of::<Scaling>() +
-                                    std::mem::size_of::<Translation>()
-                                ) as wgpu::BufferAddress,
+                                range: 0..(std::mem::size_of::<Scaling>()
+                                    + std::mem::size_of::<Translation>())
+                                    as wgpu::BufferAddress,
                             },
                         }],
                         label: Some("per_batch_scale_uniform_bind_group"),
@@ -330,5 +392,108 @@ impl Graphics2D {
 
     pub(crate) fn texture_bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         &self.texture_bind_group_layout
+    }
+
+    fn get_sprite_sheet(&self, id: SpriteSheetId) -> Option<&Rc<SpriteSheet>> {
+        self.sheets[id.get() as usize].as_ref()
+    }
+
+    /// Creates a new sprite sheet and inserts it at the given slot id
+    pub fn set_sheet<I, E>(&mut self, id: I, desc: SpriteSheetDesc) -> Result<()>
+    where
+        A2DError: From<E>,
+        I: TryInto<SpriteSheetId, Error = E>,
+    {
+        let id = id.try_into()?;
+        let sheet = match desc {
+            SpriteSheetDesc::Clear => None,
+            SpriteSheetDesc::Courier => Some(self.courier_sprite_sheet()?),
+            SpriteSheetDesc::Bytes(bytes) => Some(SpriteSheet::from_bytes(self, bytes)?),
+        };
+        self.sheets[id.get() as usize] = sheet;
+        Ok(())
+    }
+
+    pub fn set_batch<I, E, D, ED>(&mut self, id: I, desc: D) -> Result<()>
+    where
+        A2DError: From<E>,
+        A2DError: From<ED>,
+        I: TryInto<SpriteSheetId, Error = E>,
+        D: TryInto<SpriteBatchDesc, Error = ED>,
+    {
+        let id = id.try_into()?;
+        let batch = match desc.try_into()? {
+            SpriteBatchDesc::Clear => None,
+            SpriteBatchDesc::Sheet(sheet_id) => match self.get_sprite_sheet(sheet_id) {
+                Some(sheet) => Some(SpriteBatch::new(sheet.clone())),
+                None => {
+                    return Err(A2DError::new(
+                        format!(
+                            "There is no sprite sheet at the given slot ({:?})",
+                            sheet_id
+                        ),
+                        None,
+                    ))
+                }
+            },
+        };
+        self.batches[id.get() as usize] = batch;
+        Ok(())
+    }
+
+    pub fn get_batch_mut<I, E>(&mut self, id: I) -> Result<&mut SpriteBatch>
+    where
+        A2DError: From<E>,
+        I: TryInto<SpriteSheetId, Error = E>,
+    {
+        let id = id.try_into()?;
+        match &mut self.batches[id.get() as usize] {
+            Some(batch) => Ok(batch),
+            None => Err(A2DError::new(
+                format!("No batch at the given slot ({:?})", id),
+                None,
+            )),
+        }
+    }
+}
+
+pub enum SpriteSheetDesc<'a> {
+    /// Just remove whatever sprite sheet is currently at this location
+    Clear,
+
+    /// The builtin courier sprite sheet for rendering basic ASCII text
+    Courier,
+
+    /// Creates a sprite sheet from image bytes
+    ///
+    /// The bytes are interpreted by passing the bytes to the
+    /// `load_from_memory` function from the `image` crate
+    Bytes(&'a [u8]),
+}
+
+pub enum SpriteBatchDesc {
+    /// Clears the sprite batch at the given location
+    Clear,
+
+    /// Create a new sprite batch with the given sheet
+    Sheet(SpriteSheetId),
+}
+
+impl TryFrom<u16> for SpriteBatchDesc {
+    type Error = A2DError;
+
+    fn try_from(i: u16) -> Result<Self> {
+        Ok(Self::Sheet(i.try_into()?))
+    }
+}
+
+impl TryFrom<Option<u16>> for SpriteBatchDesc {
+    type Error = A2DError;
+
+    fn try_from(i: Option<u16>) -> Result<Self> {
+        match i {
+            Some(i) => Self::try_from(i),
+            None => Ok(Self::Clear),
+        }
     }
 }

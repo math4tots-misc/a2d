@@ -13,7 +13,7 @@ impl SpriteSheet {
     ///
     /// The bytes are interpreted by passing the bytes to the
     /// `load_from_memory` function from the `image` crate
-    pub fn from_bytes(state: &mut Graphics2D, diffuse_bytes: &[u8]) -> Result<Rc<Self>> {
+    pub(crate) fn from_bytes(state: &mut Graphics2D, diffuse_bytes: &[u8]) -> Result<Rc<Self>> {
         let diffuse_image = image::load_from_memory(diffuse_bytes)?;
         let diffuse_rgba = diffuse_image.to_rgba();
         Self::from_rbga_image(state, diffuse_rgba)

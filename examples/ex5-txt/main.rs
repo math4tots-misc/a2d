@@ -214,18 +214,16 @@ pub fn main() {
                     state,
                     virtual_keycode: Some(VirtualKeyCode::LWin),
                     ..
-                } => {
-                    match state {
-                        ElementState::Pressed => {
-                            println!("lwin = true");
-                            lwin = true;
-                        }
-                        ElementState::Released => {
-                            println!("lwin = false");
-                            lwin = false;
-                        }
+                } => match state {
+                    ElementState::Pressed => {
+                        println!("lwin = true");
+                        lwin = true;
                     }
-                }
+                    ElementState::Released => {
+                        println!("lwin = false");
+                        lwin = false;
+                    }
+                },
                 KeyboardInput {
                     state: ElementState::Pressed,
                     virtual_keycode: Some(code),
@@ -254,7 +252,7 @@ pub fn main() {
                 println!("char = {}", ch);
                 if lwin && *ch == '-' {
                     state.decrease_scale();
-                } else if lwin && *ch == '='  {
+                } else if lwin && *ch == '=' {
                     state.increase_scale();
                 } else if ch.is_ascii() && !ch.is_ascii_control() {
                     state.put_ch(*ch);

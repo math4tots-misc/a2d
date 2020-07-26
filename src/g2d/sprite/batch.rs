@@ -1,7 +1,7 @@
 use crate::Instance;
+use crate::Scaling;
 use crate::SpriteSheet;
 use crate::Translation;
-use crate::Scaling;
 use std::rc::Rc;
 
 pub struct SpriteBatch {

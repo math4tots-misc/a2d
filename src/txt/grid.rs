@@ -1,13 +1,13 @@
+use crate::Color;
 use crate::Dimensions;
 use crate::Graphics2D;
 use crate::Rect;
 use crate::Result;
+use crate::Scaling;
 use crate::SpriteBatch;
 use crate::SpriteMap;
 use crate::SpriteSheet;
 use crate::Translation;
-use crate::Scaling;
-use crate::Color;
 use std::rc::Rc;
 
 /// Convenience struct for drawing text on the screen.
@@ -35,8 +35,9 @@ impl TextGrid {
     pub const PADDING_FACTOR: [f32; 2] = [0.30, 0.10];
 
     /// The actual width to height ratio of each character cell
-    pub const CELL_WIDTH_TO_HEIGHT_RATIO: f32 =
-        Self::CHAR_WIDTH_TO_HEIGHT_RATIO * (1.0 - Self::PADDING_FACTOR[0]) / (1.0 - Self::PADDING_FACTOR[1]);
+    pub const CELL_WIDTH_TO_HEIGHT_RATIO: f32 = Self::CHAR_WIDTH_TO_HEIGHT_RATIO
+        * (1.0 - Self::PADDING_FACTOR[0])
+        / (1.0 - Self::PADDING_FACTOR[1]);
 
     /// loads the Courier sprite sheet embedded with A2D
     pub(crate) fn courier_sprite_sheet(graphics: &mut Graphics2D) -> Result<Rc<SpriteSheet>> {
@@ -102,12 +103,7 @@ impl TextGrid {
         let [offset_x, offset_y] = self.smap.translation();
         let x = char_width * col as f32 + offset_x;
         let y = char_height * row as f32 + offset_y;
-        [
-            x,
-            y,
-            x + char_width,
-            y + char_height,
-        ].into()
+        [x, y, x + char_width, y + char_height].into()
     }
 
     pub fn write_str(&mut self, coord: [u32; 2], s: &str) {

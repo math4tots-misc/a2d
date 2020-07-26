@@ -3,10 +3,10 @@ use crate::Dimensions;
 use crate::Instance;
 use crate::Point;
 use crate::Rect;
+use crate::Scaling;
 use crate::SpriteBatch;
 use crate::SpriteSheet;
 use crate::Translation;
-use crate::Scaling;
 use std::rc::Rc;
 
 /// A SpriteMap wraps a SpriteBatch assuming that the underlying
