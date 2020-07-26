@@ -4,7 +4,7 @@ use crate::Result;
 use std::rc::Rc;
 
 /// An image loaded in GPU memory ready to be used with a SpriteBatch
-pub struct SpriteSheet {
+pub(crate) struct SpriteSheet {
     bind_group: wgpu::BindGroup,
 }
 

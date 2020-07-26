@@ -7,6 +7,7 @@ use crate::SpriteBatch;
 use crate::SpriteSheet;
 use crate::TextGrid;
 use crate::Translation;
+use crate::Color;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::rc::Rc;
@@ -399,14 +400,16 @@ impl Graphics2D {
     }
 
     /// Creates a new sprite sheet and inserts it at the given slot id
-    pub fn set_sheet<I, E>(&mut self, id: I, desc: SpriteSheetDesc) -> Result<()>
+    pub fn set_sheet<'a, I, E, D>(&mut self, id: I, desc: D) -> Result<()>
     where
         A2DError: From<E>,
         I: TryInto<SpriteSheetId, Error = E>,
+        D: Into<SpriteSheetDesc<'a>>,
     {
         let id = id.try_into()?;
-        let sheet = match desc {
+        let sheet = match desc.into() {
             SpriteSheetDesc::Clear => None,
+            SpriteSheetDesc::Color(color) => Some(SpriteSheet::from_color(self, color)?),
             SpriteSheetDesc::Courier => Some(self.courier_sprite_sheet()?),
             SpriteSheetDesc::Bytes(bytes) => Some(SpriteSheet::from_bytes(self, bytes)?),
         };
@@ -461,6 +464,9 @@ pub enum SpriteSheetDesc<'a> {
     /// Just remove whatever sprite sheet is currently at this location
     Clear,
 
+    /// Single color sprite sheet
+    Color(Color),
+
     /// The builtin courier sprite sheet for rendering basic ASCII text
     Courier,
 
@@ -469,6 +475,14 @@ pub enum SpriteSheetDesc<'a> {
     /// The bytes are interpreted by passing the bytes to the
     /// `load_from_memory` function from the `image` crate
     Bytes(&'a [u8]),
+}
+
+impl<'a, T> From<T> for SpriteSheetDesc<'a>
+where Color: From<T>,
+{
+    fn from(t: T) -> Self {
+        Self::Color(t.into())
+    }
 }
 
 pub enum SpriteBatchDesc {

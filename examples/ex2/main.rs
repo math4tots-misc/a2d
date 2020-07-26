@@ -1,8 +1,6 @@
 extern crate a2d;
 use a2d::Graphics2D;
 use a2d::Instance;
-use a2d::SpriteBatch;
-use a2d::SpriteSheet;
 use futures::executor::block_on;
 use winit::{
     dpi::LogicalSize,
@@ -27,10 +25,12 @@ pub fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let mut state = block_on(Graphics2D::from_winit_window(&window)).unwrap();
+    let size = window.inner_size();
+    let mut state = block_on(Graphics2D::new(size.width, size.height, &window)).unwrap();
     state.set_scale([WIDTH, HEIGHT]);
-    let sheet = SpriteSheet::from_color(&mut state, [1.0, 0.5, 0.5]).unwrap();
-    let mut batch1 = SpriteBatch::new(sheet);
+    state.set_sheet(0, [1.0, 0.5, 0.5]).unwrap();
+    state.set_batch(1, 0).unwrap();
+    let batch1 = state.get_batch_mut(1).unwrap();
     batch1.add(
         Instance::builder()
             .src([0.0, 0.0, 1.0, 1.0])
@@ -66,8 +66,10 @@ pub fn main() {
             .rotate(0.0)
             .build(),
     );
-    let mut batch2 =
-        SpriteBatch::new(SpriteSheet::from_color(&mut state, [0.5, 0.5, 0.1]).unwrap());
+
+    state.set_sheet(2, [0.5, 0.5, 0.1]).unwrap();
+    state.set_batch(2, 2).unwrap();
+    let batch2 = state.get_batch_mut(2).unwrap();
     batch2.add(
         Instance::builder()
             .src([0.0, 0.0, 1.0, 1.0])
@@ -81,11 +83,11 @@ pub fn main() {
     event_loop.run(move |event, _, control_flow| match event {
         Event::RedrawRequested(_) => {
             {
-                let instance = batch1.get_mut(0);
+                let instance = state.get_batch_mut(1).unwrap().get_mut(0);
                 let dur = start.elapsed().unwrap().as_secs_f32();
                 instance.set_rotation((dur / 6.0).fract() * 2.0 * std::f32::consts::PI);
             }
-            state.render(&[&batch1, &batch2]);
+            state.render();
             std::thread::yield_now();
         }
         Event::MainEventsCleared => {
@@ -124,10 +126,10 @@ pub fn main() {
                 _ => {}
             },
             WindowEvent::Resized(physical_size) => {
-                state.resized(*physical_size);
+                state.resized(physical_size.width, physical_size.height);
             }
             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                state.resized(**new_inner_size);
+                state.resized(new_inner_size.width, new_inner_size.height);
             }
             _ => {}
         },

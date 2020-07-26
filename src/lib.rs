@@ -27,7 +27,7 @@ pub use g2d::SpriteBatchDesc;
 pub use g2d::SpriteBatchId;
 pub(crate) use g2d::SpriteMap;
 pub use g2d::SpriteMapDimensions;
-pub use g2d::SpriteSheet;
+pub(crate) use g2d::SpriteSheet;
 pub use g2d::SpriteSheetDesc;
 pub use g2d::SpriteSheetId;
 pub use transform::Dimensions;

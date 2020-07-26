@@ -13,4 +13,4 @@ pub use rect::Rect;
 pub use sprite::SpriteBatch;
 pub(crate) use sprite::SpriteMap;
 pub use sprite::SpriteMapDimensions;
-pub use sprite::SpriteSheet;
+pub(crate) use sprite::SpriteSheet;

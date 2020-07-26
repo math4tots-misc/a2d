@@ -12,7 +12,7 @@ pub struct SpriteBatch {
 }
 
 impl SpriteBatch {
-    pub fn new(sheet: Rc<SpriteSheet>) -> Self {
+    pub(crate) fn new(sheet: Rc<SpriteSheet>) -> Self {
         Self {
             sheet,
             instances: Vec::new(),
@@ -21,7 +21,7 @@ impl SpriteBatch {
         }
     }
 
-    pub fn sheet(&self) -> &SpriteSheet {
+    pub(crate) fn sheet(&self) -> &SpriteSheet {
         &self.sheet
     }
 

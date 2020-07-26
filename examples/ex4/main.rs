@@ -1,8 +1,6 @@
 extern crate a2d;
 use a2d::Graphics2D;
 use a2d::Instance;
-use a2d::SpriteBatch;
-use a2d::SpriteSheet;
 use futures::executor::block_on;
 use winit::{
     dpi::LogicalSize,
@@ -28,9 +26,11 @@ pub fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let mut state = block_on(Graphics2D::from_winit_window(&window)).unwrap();
+    let size = window.inner_size();
+    let mut state = block_on(Graphics2D::new(size.width, size.height, &window)).unwrap();
     state.set_scale([WIDTH, HEIGHT]);
-    let sheet = SpriteSheet::from_color(&mut state, [1.0, 0.5, 0.5]).unwrap();
+
+    state.set_sheet(0, [1.0, 0.5, 0.5]).unwrap();
 
     // // creating large numbers of SpriteBatches is insanely slow
     //
@@ -50,7 +50,8 @@ pub fn main() {
     // }
 
     const SIZE: usize = 100;
-    let mut batch = SpriteBatch::new(sheet.clone());
+    state.set_batch(0, 0).unwrap();
+    let batch = state.get_batch_mut(0).unwrap();
     let len = 1.0 / SIZE as f32 / 2.0;
     for r in 0..SIZE {
         let oy = r as f32 * (1.0 / SIZE as f32);
@@ -83,10 +84,10 @@ pub fn main() {
             {
                 let dur = start.elapsed().unwrap().as_secs_f32();
                 let rot = (dur / 12.0).fract();
-                batch.set_translation([WIDTH * rot, 0.0]);
+                state.get_batch_mut(0).unwrap().set_translation([WIDTH * rot, 0.0]);
             }
 
-            state.render(&[&batch]);
+            state.render();
 
             std::thread::yield_now();
         }
@@ -126,10 +127,10 @@ pub fn main() {
                 _ => {}
             },
             WindowEvent::Resized(physical_size) => {
-                state.resized(*physical_size);
+                state.resized(physical_size.width, physical_size.height);
             }
             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                state.resized(**new_inner_size);
+                state.resized(new_inner_size.width, new_inner_size.height);
             }
             _ => {}
         },
