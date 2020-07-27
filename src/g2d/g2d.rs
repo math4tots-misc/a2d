@@ -1,5 +1,6 @@
 use crate::shaders;
 use crate::A2DError;
+use crate::Color;
 use crate::Instance;
 use crate::Result;
 use crate::Scaling;
@@ -7,7 +8,6 @@ use crate::SpriteBatch;
 use crate::SpriteSheet;
 use crate::TextGrid;
 use crate::Translation;
-use crate::Color;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::rc::Rc;
@@ -478,7 +478,8 @@ pub enum SpriteSheetDesc<'a> {
 }
 
 impl<'a, T> From<T> for SpriteSheetDesc<'a>
-where Color: From<T>,
+where
+    Color: From<T>,
 {
     fn from(t: T) -> Self {
         Self::Color(t.into())

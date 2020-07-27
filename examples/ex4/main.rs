@@ -84,7 +84,10 @@ pub fn main() {
             {
                 let dur = start.elapsed().unwrap().as_secs_f32();
                 let rot = (dur / 12.0).fract();
-                state.get_batch_mut(0).unwrap().set_translation([WIDTH * rot, 0.0]);
+                state
+                    .get_batch_mut(0)
+                    .unwrap()
+                    .set_translation([WIDTH * rot, 0.0]);
             }
 
             state.render();
