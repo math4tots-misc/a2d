@@ -1,11 +1,10 @@
-use crate::Color;
-use crate::Rect;
+use super::*;
 
 /// Instance data.
 /// Data passed to the GPU per sprite in a sprite batch.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
-pub struct Instance {
+pub(super) struct Instance {
     /// [x, y] representing upper-left corner of the rectangle cropped from the source.
     /// Coordinates are between 0 and 1.
     /// Upper left corner is the origin [0, 0].
@@ -150,7 +149,7 @@ impl Instance {
     }
 }
 
-pub struct InstanceBuilder {
+pub(super) struct InstanceBuilder {
     src: Rect,
     dest: Rect,
     rotate: f32,

@@ -1,19 +1,16 @@
-use crate::Color;
-use crate::Graphics2D;
-use crate::Result;
-use std::rc::Rc;
+use super::*;
 
-/// An image loaded in GPU memory ready to be used with a SpriteBatch
-pub(crate) struct SpriteSheet {
+/// An image loaded in GPU memory ready to be used with a Batch
+pub(super) struct Sheet {
     bind_group: wgpu::BindGroup,
 }
 
-impl SpriteSheet {
+impl Sheet {
     /// Creates a sprite sheet from image bytes
     ///
     /// The bytes are interpreted by passing the bytes to the
     /// `load_from_memory` function from the `image` crate
-    pub(crate) fn from_bytes(state: &mut Graphics2D, diffuse_bytes: &[u8]) -> Result<Rc<Self>> {
+    pub fn from_bytes(state: &mut Graphics2D, diffuse_bytes: &[u8]) -> Result<Rc<Self>> {
         let diffuse_image = image::load_from_memory(diffuse_bytes)?;
         let diffuse_rgba = diffuse_image.to_rgba();
         Self::from_rbga_image(state, diffuse_rgba)
@@ -50,7 +47,7 @@ impl SpriteSheet {
     ) -> Result<Rc<Self>> {
         let rgba = match image::RgbaImage::from_raw(width, height, bytes) {
             Some(img) => img,
-            None => err!("Failed to create image from rgba bytes for SpriteSheet"),
+            None => err!("Failed to create image from rgba bytes for Sheet"),
         };
         Self::from_rbga_image(state, rgba)
     }
@@ -60,9 +57,9 @@ impl SpriteSheet {
     /// The version of `image` we use might not match with the version
     /// that the binary crate uses.
     fn from_rbga_image(state: &mut Graphics2D, diffuse_rgba: image::RgbaImage) -> Result<Rc<Self>> {
-        let device = state.device();
-        let texture_bind_group_layout = state.texture_bind_group_layout();
-        let queue = state.queue();
+        let device = &state.device;
+        let texture_bind_group_layout = &state.texture_bind_group_layout;
+        let queue = &state.queue;
 
         let dimensions = diffuse_rgba.dimensions();
         let size = wgpu::Extent3d {
@@ -80,7 +77,7 @@ impl SpriteSheet {
                 depth: 1,
             },
             // You can store multiple textures of the same size in one
-            // SpriteSheet object
+            // Sheet object
             array_layer_count: 1,
             mip_level_count: 1, // We'll talk about this a little later
             sample_count: 1,
@@ -145,7 +142,7 @@ impl SpriteSheet {
         Ok(Rc::new(Self { bind_group }))
     }
 
-    pub(crate) fn bind_group(&self) -> &wgpu::BindGroup {
+    pub fn bind_group(&self) -> &wgpu::BindGroup {
         &self.bind_group
     }
 }
