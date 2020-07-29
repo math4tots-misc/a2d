@@ -18,10 +18,11 @@ mod sheet;
 mod sprite;
 
 use batch::*;
-use iface::*;
 use inst::*;
 use sheet::*;
 use sprite::*;
+
+pub use iface::*;
 
 pub const SLOT_LIMIT: usize = 16;
 

@@ -1,4 +1,5 @@
 use a2d::Graphics2D;
+use a2d::TextGridDim;
 use futures::executor::block_on;
 use winit::{
     dpi::{LogicalSize, PhysicalSize},
@@ -27,7 +28,14 @@ fn main() {
     .unwrap();
     graphics.set_scale([logical_size.width as f32, logical_size.height as f32]);
 
-    graphics.init_text_grid(20).unwrap();
+    let TextGridDim { nrows, ncols } = graphics.init_text_grid(80).unwrap();
+
+    for r in 0..nrows {
+        for c in 0..ncols {
+            graphics.draw_char(r, c, 'x').unwrap();
+        }
+    }
+
     graphics.draw_text(0, 0, "HeLlo WwOoRrLlDd!D").unwrap();
     graphics.flush().unwrap();
 
@@ -49,7 +57,9 @@ fn main() {
                     *control_flow = ControlFlow::Exit;
                 }
                 WindowEvent::ReceivedCharacter(ch) => {
-                    graphics.draw_char(0, 0, *ch).unwrap();
+                    graphics.draw_char(5, 5, *ch).unwrap();
+                    graphics.flush().unwrap();
+                    window.request_redraw();
                 }
                 WindowEvent::KeyboardInput { input, .. } => match input {
                     KeyboardInput {
@@ -68,13 +78,16 @@ fn main() {
                     // TODO: update size
                     let logical_size =
                         LogicalSize::from_physical(*physical_size, window.scale_factor());
-                    graphics.resized(logical_size.width, logical_size.height);
+                    graphics.resized(physical_size.width, physical_size.height);
+                    graphics.set_scale([logical_size.width, logical_size.height]);
                 }
                 WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                     // TODO: update scale factor and size
+                    let physical_size = **new_inner_size;
                     let logical_size =
-                        LogicalSize::from_physical(**new_inner_size, window.scale_factor());
-                    graphics.resized(logical_size.width, logical_size.height);
+                        LogicalSize::from_physical(physical_size, window.scale_factor());
+                    graphics.resized(physical_size.width, physical_size.height);
+                    graphics.set_scale([logical_size.width, logical_size.height]);
                 }
                 _ => {}
             },

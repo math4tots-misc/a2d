@@ -179,13 +179,13 @@ impl Graphics2D {
     ///
     /// The grid will be sized so that there will be exactly 'ncols' columns
     ///
-    pub fn init_text_grid(&mut self, ncols: usize) -> Result<()> {
+    pub fn init_text_grid(&mut self, ncols: usize) -> Result<TextGridDim> {
         let [width, height] = self.scale();
-        let dest_width = width / ncols as f32;
-        let dest_height = res::CHAR_HEIGHT_TO_WIDTH_RATIO * dest_width;
-        let step_width = dest_width * 0.50;
-        let step_height = dest_height * 0.50;
-        let nrows = (height / dest_height) as usize;
+        let step_width = width / (ncols + 1) as f32;
+        let step_height = res::CHAR_HEIGHT_TO_WIDTH_RATIO * step_width;
+        let dest_width = step_width * 2.0;
+        let dest_height = step_height * 2.0;
+        let nrows = (height / step_height) as usize;
         let mut descs = vec![];
         for row in 0..nrows {
             let y = step_height * (row as f32);
@@ -207,8 +207,9 @@ impl Graphics2D {
             res::CHARMAP_NCOLS,
             &descs,
         ));
-        self.text_grid_dim = Some(TextGridDim { nrows, ncols });
-        Ok(())
+        let dim = TextGridDim { nrows, ncols };
+        self.text_grid_dim = Some(dim);
+        Ok(dim)
     }
 
     pub fn draw_char(&mut self, row: usize, col: usize, ch: char) -> Result<()> {
@@ -235,7 +236,7 @@ impl Graphics2D {
 }
 
 #[derive(Clone, Copy)]
-pub(super) struct TextGridDim {
+pub struct TextGridDim {
     pub nrows: usize,
     pub ncols: usize,
 }
