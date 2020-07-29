@@ -3,10 +3,11 @@ use super::*;
 /// Helper methods on Graphics2D (all listed here should be private to a2d)
 impl Graphics2D {
     pub(super) async fn new0<W: HasRawWindowHandle>(
-        width: u32,
-        height: u32,
+        physical_width: u32,
+        physical_height: u32,
         window: &W,
     ) -> Result<Self> {
+
         let surface = wgpu::Surface::create(window);
         let adapter = match wgpu::Adapter::request(
             &wgpu::RequestAdapterOptions {
@@ -31,8 +32,8 @@ impl Graphics2D {
         let sc_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
             format: wgpu::TextureFormat::Bgra8UnormSrgb,
-            width: width,
-            height: height,
+            width: physical_width,
+            height: physical_height,
             present_mode: wgpu::PresentMode::Fifo,
         };
         let swap_chain = device.create_swap_chain(&surface, &sc_desc);
@@ -151,6 +152,7 @@ impl Graphics2D {
             scale_uniform_buffer,
             batches: Default::default(),
             pixel_instance_map: HashMap::new(),
+            text_grid_dim: None,
         })
     }
 

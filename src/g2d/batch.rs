@@ -49,6 +49,10 @@ impl Batch {
         &self.instances
     }
 
+    pub fn clear(&mut self) {
+        self.instances.clear();
+    }
+
     pub fn get(&mut self, i: usize) -> SpriteView {
         SpriteView { batch: self, i }
     }
@@ -73,7 +77,7 @@ impl Batch {
         let rwidth = 1.0 / (self.ncols as f32);
         let rheight = 1.0 / (self.nrows as f32);
         let col = (index % self.ncols) as f32;
-        let row = (index / self.nrows) as f32;
+        let row = (index / self.ncols) as f32;
         [
             col * rwidth,
             row * rheight,

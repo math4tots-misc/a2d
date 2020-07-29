@@ -122,6 +122,7 @@ impl Graphics2D {
         self.sc_desc.height = height;
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
         self.set_scale([width as f32, height as f32]);
+        self.text_grid_dim = None;
     }
 
     /// By default, the screen coordinates are [0, 0] for the
@@ -145,7 +146,7 @@ impl Graphics2D {
     }
 
     /// Returns the number of sprites the batch at the given slot has.
-    /// Will panic if the slot is either out of bounds or there is no
+    /// Panics if the slot is either out of bounds or there is no
     /// batch present at the given index
     pub fn nsprites(&self, slot: usize) -> usize {
         self.batches[slot].as_ref().unwrap().len()
@@ -186,4 +187,62 @@ impl Graphics2D {
         self.pixel_batch().get(inst_index).color(color);
         Ok(())
     }
+
+    /// Initialize the builtin text batch to cover the entire drawing area.
+    ///
+    /// The grid will be sized so that there will be exactly 'ncols' columns
+    ///
+    pub fn init_text_grid(&mut self, ncols: usize) -> Result<()> {
+        let [width, height] = self.scale();
+        let dest_width = width / ncols as f32;
+        let dest_height = res::CHAR_HEIGHT_TO_WIDTH_RATIO * dest_width;
+        let step_width = dest_width * 0.50;
+        let step_height = dest_height * 0.50;
+        let nrows = (height / dest_height) as usize;
+        let batch = self.text_batch();
+        println!("dest_width = {}, dest_height = {}", dest_width, dest_height);
+        batch.clear();
+        for row in 0..nrows {
+            let y = step_height * (row as f32);
+            for col in 0..ncols {
+                let x = step_width * (col as f32);
+                batch.add(SpriteDesc {
+                    color: [1.0, 1.0, 1.0].into(),
+                    src: res::CHAR_EMPTY_SPACE_INDEX,
+                    dst: [x, y, x + dest_width, y + dest_height].into(),
+                    rotate: 0.0,
+                });
+            }
+        }
+        self.text_grid_dim = Some(TextGridDim { nrows, ncols });
+        Ok(())
+    }
+
+    pub fn draw_char(&mut self, row: usize, col: usize, ch: char) -> Result<()> {
+        if self.text_grid_dim.is_none() {
+            self.init_text_grid(DEFAULT_TEXT_NCOLS)?;
+        }
+        let TextGridDim { nrows, ncols } = self.text_grid_dim.unwrap();
+        if row < nrows && col < ncols {
+            let instance_index = ncols * row + col;
+            if let Some(src) = res::char_to_charmap_index(ch) {
+                self.text_batch().get(instance_index).src(src);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn draw_text(&mut self, row: usize, col: usize, text: &str) -> Result<()> {
+        let chars: Vec<_> = text.chars().collect();
+        for c in col..col + chars.len() {
+            self.draw_char(row, c, chars[c - col])?;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(super) struct TextGridDim {
+    pub nrows: usize,
+    pub ncols: usize,
 }

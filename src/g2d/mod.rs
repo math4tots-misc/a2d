@@ -17,6 +17,7 @@ mod sheet;
 mod sprite;
 
 use batch::*;
+use iface::*;
 use inst::*;
 use sheet::*;
 use sprite::*;
@@ -25,6 +26,8 @@ pub const SLOT_LIMIT: usize = 16;
 
 pub const BATCH_SLOT_TEXT: usize = 0;
 pub const BATCH_SLOT_PIXEL: usize = 1;
+
+pub const DEFAULT_TEXT_NCOLS: usize = 80;
 
 pub struct Graphics2D {
     surface: wgpu::Surface,
@@ -42,4 +45,6 @@ pub struct Graphics2D {
     batches: [Option<Batch>; SLOT_LIMIT],
 
     pixel_instance_map: HashMap<(u32, u32), usize>,
+
+    text_grid_dim: Option<TextGridDim>,
 }
