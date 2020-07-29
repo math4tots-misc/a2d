@@ -5,17 +5,6 @@ impl Graphics2D {
     pub async fn new<W: HasRawWindowHandle>(width: u32, height: u32, window: &W) -> Result<Self> {
         let mut graphics = Self::new0(width, height, window).await?;
         graphics.set_scale([width as f32, height as f32]);
-
-        // initialize builtin batches
-        let text_batch = Batch::new(
-            Sheet::from_bytes(&mut graphics, res::COURIER_CHARMAP)?,
-            res::CHARMAP_NROWS,
-            res::CHARMAP_NCOLS,
-        );
-        let pixel_batch = Batch::new(Sheet::from_color(&mut graphics, [1.0, 1.0, 1.0])?, 1, 1);
-        graphics.batches[BATCH_SLOT_TEXT] = Some(text_batch);
-        graphics.batches[BATCH_SLOT_PIXEL] = Some(pixel_batch);
-
         Ok(graphics)
     }
 
@@ -165,25 +154,11 @@ impl Graphics2D {
     /// is to draw pixel by pixel and how much it might heat up their computer
     /// and make their computer's fans go crazy is something I'd like to support.
     ///
-    pub fn set_pixel<C: Into<Color>>(&mut self, xy: (u32, u32), color: C) -> Result<()> {
-        let inst_index = if let Some(index) = self.pixel_instance_map.get(&xy) {
-            *index
-        } else {
-            let batch = self.pixel_batch();
-            let index = batch.len();
-            let (x, y) = xy;
-            let x = x as f32;
-            let y = y as f32;
-            batch.add(SpriteDesc {
-                color: [0.0, 0.0, 0.0, 0.0].into(),
-                src: 0,
-                dst: [x, y, x + 1.0, y + 1.0].into(),
-                rotate: 0.0,
-            });
-            self.pixel_instance_map.insert(xy, index);
-            index
-        };
-        self.pixel_batch().get(inst_index).color(color);
+    pub fn set_pixel<C: Into<Color>>(&mut self, x: usize, y: usize, color: C) -> Result<()> {
+        let [width, _] = self.scale();
+        let width = width as usize;
+        let inst_index = y * width + x;
+        self.pixel_batch()?.get(inst_index).color(color);
         Ok(())
     }
 
@@ -198,14 +173,12 @@ impl Graphics2D {
         let step_width = dest_width * 0.50;
         let step_height = dest_height * 0.50;
         let nrows = (height / dest_height) as usize;
-        let batch = self.text_batch();
-        println!("dest_width = {}, dest_height = {}", dest_width, dest_height);
-        batch.clear();
+        let mut descs = vec![];
         for row in 0..nrows {
             let y = step_height * (row as f32);
             for col in 0..ncols {
                 let x = step_width * (col as f32);
-                batch.add(SpriteDesc {
+                descs.push(SpriteDesc {
                     color: [1.0, 1.0, 1.0].into(),
                     src: res::CHAR_EMPTY_SPACE_INDEX,
                     dst: [x, y, x + dest_width, y + dest_height].into(),
@@ -213,6 +186,12 @@ impl Graphics2D {
                 });
             }
         }
+        self.batches[BATCH_SLOT_TEXT] = Some(Batch::new(
+            Sheet::from_bytes(self, res::COURIER_CHARMAP)?,
+            res::CHARMAP_NROWS,
+            res::CHARMAP_NCOLS,
+            &descs,
+        ));
         self.text_grid_dim = Some(TextGridDim { nrows, ncols });
         Ok(())
     }
@@ -225,7 +204,7 @@ impl Graphics2D {
         if row < nrows && col < ncols {
             let instance_index = ncols * row + col;
             if let Some(src) = res::char_to_charmap_index(ch) {
-                self.text_batch().get(instance_index).src(src);
+                self.text_batch()?.get(instance_index).src(src);
             }
         }
         Ok(())

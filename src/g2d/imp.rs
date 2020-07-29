@@ -7,7 +7,6 @@ impl Graphics2D {
         physical_height: u32,
         window: &W,
     ) -> Result<Self> {
-
         let surface = wgpu::Surface::create(window);
         let adapter = match wgpu::Adapter::request(
             &wgpu::RequestAdapterOptions {
@@ -151,16 +150,35 @@ impl Graphics2D {
             scale,
             scale_uniform_buffer,
             batches: Default::default(),
-            pixel_instance_map: HashMap::new(),
             text_grid_dim: None,
         })
     }
 
-    pub(super) fn pixel_batch(&mut self) -> &mut Batch {
-        self.batches[BATCH_SLOT_PIXEL].as_mut().unwrap()
+    pub(super) fn pixel_batch(&mut self) -> Result<&mut Batch> {
+        if self.batches[BATCH_SLOT_PIXEL].is_none() {
+            let [width, height] = self.scale();
+            let width = width as usize;
+            let height = height as usize;
+            let mut descs = vec![];
+            for y in 0..height {
+                let y = y as f32;
+                for x in 0..width {
+                    let x = x as f32;
+                    descs.push(SpriteDesc {
+                        src: 0,
+                        dst: [x, y, x + 1.0, y + 1.0].into(),
+                        rotate: 0.0,
+                        color: [0.0, 0.0, 0.0, 0.0].into(),
+                    });
+                }
+            }
+            let batch = Batch::new(Sheet::from_color(self, [1.0, 1.0, 1.0])?, 1, 1, &descs);
+            self.batches[BATCH_SLOT_PIXEL] = Some(batch);
+        }
+        Ok(self.batches[BATCH_SLOT_PIXEL].as_mut().unwrap())
     }
 
-    pub(super) fn text_batch(&mut self) -> &mut Batch {
-        self.batches[BATCH_SLOT_TEXT].as_mut().unwrap()
+    pub(super) fn text_batch(&mut self) -> Result<&mut Batch> {
+        Ok(self.batches[BATCH_SLOT_TEXT].as_mut().unwrap())
     }
 }

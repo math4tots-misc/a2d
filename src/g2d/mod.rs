@@ -6,7 +6,6 @@ use crate::Result;
 use crate::Scaling;
 use crate::Translation;
 use raw_window_handle::HasRawWindowHandle;
-use std::collections::HashMap;
 use std::rc::Rc;
 
 mod batch;
@@ -43,8 +42,6 @@ pub struct Graphics2D {
     scale_uniform_buffer: wgpu::Buffer,
 
     batches: [Option<Batch>; SLOT_LIMIT],
-
-    pixel_instance_map: HashMap<(u32, u32), usize>,
 
     text_grid_dim: Option<TextGridDim>,
 }

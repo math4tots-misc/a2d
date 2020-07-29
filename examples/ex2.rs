@@ -20,7 +20,11 @@ fn main() {
     let physical_size = PhysicalSize::from_logical(logical_size, window.scale_factor());
 
     let mut graphics = block_on(Graphics2D::new(
-        physical_size.width, physical_size.height, &window)).unwrap();
+        physical_size.width,
+        physical_size.height,
+        &window,
+    ))
+    .unwrap();
     graphics.set_scale([logical_size.width as f32, logical_size.height as f32]);
 
     graphics.init_text_grid(20).unwrap();

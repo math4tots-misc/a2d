@@ -19,12 +19,13 @@ fn main() {
 
     let mut graphics = block_on(Graphics2D::new(width, height, &window)).unwrap();
 
-    graphics.set_pixel((0, 0), [0.0, 1.0, 1.0]).unwrap();
+    graphics.set_pixel(0, 0, [0.0, 1.0, 1.0]).unwrap();
     for x in 0..width {
         for y in 0..height {
             graphics
                 .set_pixel(
-                    (x, y),
+                    x as usize,
+                    y as usize,
                     [1.0, x as f32 / width as f32, y as f32 / height as f32],
                 )
                 .unwrap();
@@ -56,7 +57,7 @@ fn main() {
                     ]
                     .into();
                 }
-                graphics.set_pixel((x, y), color).unwrap();
+                graphics.set_pixel(x as usize, y as usize, color).unwrap();
             }
             graphics.render().unwrap();
             std::thread::yield_now();

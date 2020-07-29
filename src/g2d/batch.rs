@@ -12,15 +12,29 @@ pub(super) struct Batch {
 
 #[allow(dead_code)]
 impl Batch {
-    pub fn new(sheet: Rc<Sheet>, nrows: usize, ncols: usize) -> Self {
-        Self {
+    pub fn new(sheet: Rc<Sheet>, nrows: usize, ncols: usize, descs: &[SpriteDesc]) -> Self {
+        let mut ret = Self {
             sheet,
             instances: Vec::new(),
             scale: [1.0, 1.0],
             translation: [0.0, 0.0],
             nrows,
             ncols,
+        };
+
+        for desc in descs {
+            let src = ret.src_index_to_rect(desc.src);
+            ret.instances.push(
+                Instance::builder()
+                    .src(src)
+                    .dest(desc.dst)
+                    .rotate(desc.rotate)
+                    .color_factor(desc.color)
+                    .build(),
+            );
         }
+
+        ret
     }
 
     pub fn sheet(&self) -> &Sheet {
