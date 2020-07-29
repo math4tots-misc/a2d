@@ -19,7 +19,6 @@ fn main() {
 
     let mut graphics = block_on(Graphics2D::new(width, height, &window)).unwrap();
 
-    graphics.set_scale([width as f32, height as f32]);
     graphics.set_pixel((0, 0), [0.0, 1.0, 1.0]).unwrap();
     for x in 0..width {
         for y in 0..height {

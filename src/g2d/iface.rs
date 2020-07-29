@@ -4,6 +4,7 @@ use super::*;
 impl Graphics2D {
     pub async fn new<W: HasRawWindowHandle>(width: u32, height: u32, window: &W) -> Result<Self> {
         let mut graphics = Self::new0(width, height, window).await?;
+        graphics.set_scale([width as f32, height as f32]);
 
         // initialize builtin batches
         let text_batch = Batch::new(
@@ -120,10 +121,11 @@ impl Graphics2D {
         self.sc_desc.width = width;
         self.sc_desc.height = height;
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
+        self.set_scale([width as f32, height as f32]);
     }
 
     /// By default, the screen coordinates are [0, 0] for the
-    /// upper-left corner and [1, 1] for the lower-right corner.
+    /// upper-left corner and [width, height] for the lower-right corner.
     /// The coordinates of the lower-right corner may be customized
     /// with `set_scale`. The `scale` method returns the currently
     /// set [max_x, max_y] values for the lower-right corner.
@@ -140,6 +142,13 @@ impl Graphics2D {
             bytemuck::cast_slice(&self.scale),
             wgpu::BufferUsage::UNIFORM,
         );
+    }
+
+    /// Returns the number of sprites the batch at the given slot has.
+    /// Will panic if the slot is either out of bounds or there is no
+    /// batch present at the given index
+    pub fn nsprites(&self, slot: usize) -> usize {
+        self.batches[slot].as_ref().unwrap().len()
     }
 
     /// Uses the builtin pixel batch to draw a pixel of the given color at the
