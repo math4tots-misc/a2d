@@ -7,6 +7,8 @@ use crate::Scaling;
 use crate::Translation;
 use raw_window_handle::HasRawWindowHandle;
 use std::rc::Rc;
+use std::sync::Arc;
+use std::time::Duration;
 
 mod batch;
 mod iface;
@@ -30,7 +32,7 @@ pub const DEFAULT_TEXT_NCOLS: usize = 80;
 
 pub struct Graphics2D {
     surface: wgpu::Surface,
-    device: wgpu::Device,
+    device: Arc<wgpu::Device>,
     queue: wgpu::Queue,
     sc_desc: wgpu::SwapChainDescriptor,
     swap_chain: wgpu::SwapChain,
@@ -44,4 +46,12 @@ pub struct Graphics2D {
     batches: [Option<Batch>; SLOT_LIMIT],
 
     text_grid_dim: Option<TextGridDim>,
+
+    /// Used by render_if_dirty to determine if there's been
+    /// any change since the last render
+    dirty: bool,
+
+    /// For reading and writing from wgpu buffers, device.poll(..) needs
+    /// to be called continuously.
+    poll_thread: Option<(std::thread::JoinHandle<()>, std::sync::mpsc::Sender<()>)>,
 }

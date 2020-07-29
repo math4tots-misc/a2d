@@ -8,24 +8,35 @@ impl Graphics2D {
         Ok(graphics)
     }
 
-    pub fn render(&mut self) -> Result<()> {
+    /// Flushes all pending writes to their buffers
+    /// This needs to be called for render to show updates
+    pub fn flush(&mut self) -> Result<()> {
+        self.ensure_polling()?;
+        futures::executor::block_on(self.async_flush())?;
+        self.dirty = true;
+        Ok(())
+    }
+
+    pub fn render_if_dirty(&mut self) -> Result<()> {
+        if self.dirty {
+            self.force_render()?;
+        }
+        Ok(())
+    }
+
+    pub fn force_render(&mut self) -> Result<()> {
+        self.dirty = false;
         struct BatchInfo<'a> {
             batch: &'a Batch,
-            instance_buffer: wgpu::Buffer,
+            instance_buffer: &'a wgpu::Buffer,
             translation_bind_group: wgpu::BindGroup,
+            instance_len: usize,
         }
         let batches_with_instance_buffers = {
             let mut vec = Vec::new();
             for batch in self.batches.iter().rev().flatten() {
-                // wgpu will error if you try to create a buffer of size 0,
-                // so explicitly check for those cases and skip
-                if batch.instances().is_empty() {
-                    continue;
-                }
-                let instance_buffer = self.device.create_buffer_with_data(
-                    bytemuck::cast_slice(batch.instances()),
-                    wgpu::BufferUsage::VERTEX,
-                );
+                let instance_buffer = batch.instance_buffer();
+                let instance_len = batch.len();
                 let translation_buffer = self.device.create_buffer_with_data(
                     bytemuck::cast_slice(&[batch.scale(), batch.translation()]),
                     wgpu::BufferUsage::UNIFORM,
@@ -48,6 +59,7 @@ impl Graphics2D {
                     batch,
                     instance_buffer,
                     translation_bind_group,
+                    instance_len,
                 });
             }
             vec
@@ -93,11 +105,12 @@ impl Graphics2D {
                 let batch = info.batch;
                 let instance_buffer = &info.instance_buffer;
                 let translation_bind_group = &info.translation_bind_group;
+                let instance_len = info.instance_len;
                 render_pass.set_bind_group(0, batch.sheet().bind_group(), &[]);
                 render_pass.set_bind_group(1, &scale_uniform_bind_group, &[]);
                 render_pass.set_bind_group(2, translation_bind_group, &[]);
                 render_pass.set_vertex_buffer(0, instance_buffer, 0, 0);
-                render_pass.draw(0..6, 0..batch.instances().len() as u32);
+                render_pass.draw(0..6, 0..instance_len as u32);
             }
         }
 
@@ -186,8 +199,10 @@ impl Graphics2D {
                 });
             }
         }
+        let sheet = Sheet::from_bytes(self, res::COURIER_CHARMAP)?;
         self.batches[BATCH_SLOT_TEXT] = Some(Batch::new(
-            Sheet::from_bytes(self, res::COURIER_CHARMAP)?,
+            self,
+            sheet,
             res::CHARMAP_NROWS,
             res::CHARMAP_NCOLS,
             &descs,

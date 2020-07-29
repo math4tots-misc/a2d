@@ -29,52 +29,56 @@ fn main() {
 
     graphics.init_text_grid(20).unwrap();
     graphics.draw_text(0, 0, "HeLlo WwOoRrLlDd!D").unwrap();
+    graphics.flush().unwrap();
 
-    event_loop.run(move |event, _, control_flow| match event {
-        Event::RedrawRequested(_) => {
-            graphics.render().unwrap();
-            std::thread::yield_now();
-        }
-        Event::MainEventsCleared => {
-            window.request_redraw();
-        }
-        Event::WindowEvent {
-            ref event,
-            window_id: _,
-        } => match event {
-            WindowEvent::CloseRequested => {
-                *control_flow = ControlFlow::Exit;
+    event_loop.run(move |event, _, control_flow| {
+        *control_flow = ControlFlow::Wait;
+        match event {
+            Event::RedrawRequested(_) => {
+                graphics.force_render().unwrap();
+                std::thread::yield_now();
             }
-            WindowEvent::ReceivedCharacter(ch) => {
-                graphics.draw_char(0, 0, *ch).unwrap();
+            Event::MainEventsCleared => {
+                window.request_redraw();
             }
-            WindowEvent::KeyboardInput { input, .. } => match input {
-                KeyboardInput {
-                    state: ElementState::Pressed,
-                    virtual_keycode: Some(code),
-                    ..
-                } => match code {
-                    VirtualKeyCode::Escape => {
-                        *control_flow = ControlFlow::Exit;
-                    }
+            Event::WindowEvent {
+                ref event,
+                window_id: _,
+            } => match event {
+                WindowEvent::CloseRequested => {
+                    *control_flow = ControlFlow::Exit;
+                }
+                WindowEvent::ReceivedCharacter(ch) => {
+                    graphics.draw_char(0, 0, *ch).unwrap();
+                }
+                WindowEvent::KeyboardInput { input, .. } => match input {
+                    KeyboardInput {
+                        state: ElementState::Pressed,
+                        virtual_keycode: Some(code),
+                        ..
+                    } => match code {
+                        VirtualKeyCode::Escape => {
+                            *control_flow = ControlFlow::Exit;
+                        }
+                        _ => {}
+                    },
                     _ => {}
                 },
+                WindowEvent::Resized(physical_size) => {
+                    // TODO: update size
+                    let logical_size =
+                        LogicalSize::from_physical(*physical_size, window.scale_factor());
+                    graphics.resized(logical_size.width, logical_size.height);
+                }
+                WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                    // TODO: update scale factor and size
+                    let logical_size =
+                        LogicalSize::from_physical(**new_inner_size, window.scale_factor());
+                    graphics.resized(logical_size.width, logical_size.height);
+                }
                 _ => {}
             },
-            WindowEvent::Resized(physical_size) => {
-                // TODO: update size
-                let logical_size =
-                    LogicalSize::from_physical(*physical_size, window.scale_factor());
-                graphics.resized(logical_size.width, logical_size.height);
-            }
-            WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                // TODO: update scale factor and size
-                let logical_size =
-                    LogicalSize::from_physical(**new_inner_size, window.scale_factor());
-                graphics.resized(logical_size.width, logical_size.height);
-            }
             _ => {}
-        },
-        _ => {}
+        }
     });
 }

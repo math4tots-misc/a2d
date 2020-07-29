@@ -56,3 +56,9 @@ impl From<image::ImageError> for A2DError {
         A2DError::new(format!("ImageError"), Some(Box::new(e)))
     }
 }
+
+impl From<wgpu::BufferAsyncErr> for A2DError {
+    fn from(e: wgpu::BufferAsyncErr) -> Self {
+        A2DError::new(format!("BufferAsyncErr: {:?}", e), None)
+    }
+}

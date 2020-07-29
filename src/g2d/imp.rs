@@ -1,5 +1,8 @@
 use super::*;
 
+/// Call wgpu's device.poll(..) roughly 60 times per second
+const POLL_SLEEP_DUR: Duration = Duration::from_micros((1000000.0 / 60.0) as u64);
+
 /// Helper methods on Graphics2D (all listed here should be private to a2d)
 impl Graphics2D {
     pub(super) async fn new0<W: HasRawWindowHandle>(
@@ -139,7 +142,7 @@ impl Graphics2D {
 
         Ok(Self {
             surface,
-            device,
+            device: Arc::new(device),
             queue,
             sc_desc,
             swap_chain,
@@ -151,6 +154,8 @@ impl Graphics2D {
             scale_uniform_buffer,
             batches: Default::default(),
             text_grid_dim: None,
+            dirty: true,
+            poll_thread: None,
         })
     }
 
@@ -172,7 +177,8 @@ impl Graphics2D {
                     });
                 }
             }
-            let batch = Batch::new(Sheet::from_color(self, [1.0, 1.0, 1.0])?, 1, 1, &descs);
+            let sheet = Sheet::from_color(self, [1.0, 1.0, 1.0])?;
+            let batch = Batch::new(self, sheet, 1, 1, &descs);
             self.batches[BATCH_SLOT_PIXEL] = Some(batch);
         }
         Ok(self.batches[BATCH_SLOT_PIXEL].as_mut().unwrap())
@@ -180,5 +186,38 @@ impl Graphics2D {
 
     pub(super) fn text_batch(&mut self) -> Result<&mut Batch> {
         Ok(self.batches[BATCH_SLOT_TEXT].as_mut().unwrap())
+    }
+
+    pub(super) fn ensure_polling(&mut self) -> Result<()> {
+        if self.poll_thread.is_none() {
+            let device = self.device.clone();
+            let (sender, receiver) = std::sync::mpsc::channel();
+            let thread = std::thread::Builder::new()
+                .name("a2d-wgpu-poll".to_owned())
+                .spawn(move || loop {
+                    match receiver.try_recv() {
+                        Ok(()) | Err(std::sync::mpsc::TryRecvError::Disconnected) => break,
+                        Err(std::sync::mpsc::TryRecvError::Empty) => {}
+                    }
+                    device.poll(wgpu::Maintain::Wait);
+                    std::thread::sleep(POLL_SLEEP_DUR);
+                    std::thread::yield_now();
+                })?;
+            self.poll_thread = Some((thread, sender));
+        }
+        Ok(())
+    }
+
+    pub(super) async fn async_flush(&mut self) -> Result<()> {
+        let futs: Vec<_> = self
+            .batches
+            .iter_mut()
+            .flatten()
+            .map(Batch::flush)
+            .collect();
+        let futs = futures::future::try_join_all(futs);
+        self.device.poll(wgpu::Maintain::Wait);
+        futs.await?;
+        Ok(())
     }
 }
