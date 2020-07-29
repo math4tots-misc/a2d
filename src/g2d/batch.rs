@@ -10,6 +10,7 @@ pub(super) struct Batch {
     ncols: usize,
 }
 
+#[allow(dead_code)]
 impl Batch {
     pub fn new(sheet: Rc<Sheet>, nrows: usize, ncols: usize) -> Self {
         Self {
@@ -93,6 +94,7 @@ pub(super) struct SpriteView<'a> {
     i: usize,
 }
 
+#[allow(dead_code)]
 impl<'a> SpriteView<'a> {
     pub fn src(&mut self, src_index: usize) -> &mut Self {
         let src = self.batch.src_index_to_rect(src_index);

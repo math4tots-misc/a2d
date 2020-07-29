@@ -169,10 +169,8 @@ impl Graphics2D {
         let inst_index = if let Some(index) = self.pixel_instance_map.get(&xy) {
             *index
         } else {
-            let index = self.pixel_instance_map.len();
-            self.pixel_instance_map.insert(xy, index);
             let batch = self.pixel_batch();
-            assert_eq!(batch.len(), index);
+            let index = batch.len();
             let (x, y) = xy;
             let x = x as f32;
             let y = y as f32;
@@ -182,6 +180,7 @@ impl Graphics2D {
                 dst: [x, y, x + 1.0, y + 1.0].into(),
                 rotate: 0.0,
             });
+            self.pixel_instance_map.insert(xy, index);
             index
         };
         self.pixel_batch().get(inst_index).color(color);

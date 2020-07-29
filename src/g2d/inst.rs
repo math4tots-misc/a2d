@@ -41,6 +41,7 @@ unsafe impl bytemuck::Zeroable for Instance {}
 
 const FLOAT_SIZE: wgpu::BufferAddress = std::mem::size_of::<f32>() as wgpu::BufferAddress;
 
+#[allow(dead_code)]
 impl Instance {
     pub fn builder() -> InstanceBuilder {
         InstanceBuilder {
